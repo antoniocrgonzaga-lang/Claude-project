@@ -1,0 +1,16 @@
+# Dependências e saídas de ferramentas
+node_modules/
+npm-debug.log*
+
+# Arquivos de sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Rascunhos, capturas de tela de teste e variáveis de ambiente (nunca versionar segredos)
+*.tmp
+*.log
+shots/
+.env
+.env.*

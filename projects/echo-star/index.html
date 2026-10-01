@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Echo Star</title>
+  <meta name="description" content="Echo Star — explore mini-planetas procedurais numa nave espacial e a pé. Um jogo 3D no navegador feito com Three.js.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Cena 3D -->
+  <canvas id="game"></canvas>
+
+  <!-- ===== HUD ===== -->
+  <div id="hud">
+    <!-- Marcadores flutuantes de planetas e da nave -->
+    <div id="markers"></div>
+
+    <!-- Mira (nave e primeira pessoa) -->
+    <div id="crosshair"></div>
+
+    <!-- Canto superior esquerdo: local atual -->
+    <div class="panel" id="place-box">
+      <div id="mode-label">NAVE</div>
+      <div id="planet-name">Espaço profundo</div>
+      <div id="planet-sub">—</div>
+    </div>
+
+    <!-- Canto superior direito: recursos -->
+    <div class="panel" id="res-box">
+      <div class="res-row"><span class="gem crystal"></span><span class="res-name">Cristal Eco</span><span class="res-count" id="cnt-crystal">0</span></div>
+      <div class="res-row"><span class="gem core"></span><span class="res-name">Núcleo Solar</span><span class="res-count" id="cnt-core">0</span></div>
+      <div class="res-row"><span class="gem essence"></span><span class="res-name">Essência Lunar</span><span class="res-count" id="cnt-essence">0</span></div>
+      <div id="local-res"></div>
+      <div id="explored"></div>
+    </div>
+
+    <!-- Canto inferior esquerdo: painel da nave -->
+    <div class="panel" id="flight-box">
+      <div class="stat">
+        <span class="stat-label">VELOCIDADE</span>
+        <span class="stat-val"><b id="speed-val">0</b> m/s</span>
+      </div>
+      <div class="bar"><div id="throttle-bar" class="fill"></div></div>
+      <div class="stat">
+        <span class="stat-label">COMBUSTÍVEL</span>
+        <span class="stat-val"><b id="fuel-val">100</b>%</span>
+      </div>
+      <div class="bar"><div id="fuel-bar" class="fill fuel"></div></div>
+    </div>
+
+    <!-- Canto inferior direito: pulso de eco (a pé) -->
+    <div class="panel" id="echo-box">
+      <div class="stat"><span class="stat-label">PULSO DE ECO</span><span class="stat-val"><kbd>R</kbd></span></div>
+      <div class="bar"><div id="echo-bar" class="fill echo"></div></div>
+    </div>
+
+    <!-- Mensagem de contexto, no centro embaixo -->
+    <div id="prompt"></div>
+
+    <!-- Avisos temporários -->
+    <div id="toasts"></div>
+
+    <div id="fps"></div>
+  </div>
+
+  <!-- Painel de ajuda (tecla H) -->
+  <div id="help">
+    <h3>Controles <small>(H fecha)</small></h3>
+    <h4>Na nave</h4>
+    <ul>
+      <li><kbd>W</kbd> / <kbd>S</kbd> acelerar / frear e dar ré</li>
+      <li><kbd>Shift</kbd> turbo &nbsp; <kbd>X</kbd> parar</li>
+      <li><kbd>Mouse</kbd> ou <kbd>↑</kbd><kbd>↓</kbd> inclinar &nbsp; <kbd>A</kbd><kbd>D</kbd> virar</li>
+      <li><kbd>Q</kbd> / <kbd>E</kbd> girar (rolar)</li>
+      <li><kbd>L</kbd> pousar (perto de um planeta)</li>
+      <li><kbd>Espaço</kbd> decolar &nbsp; <kbd>F</kbd> sair da nave</li>
+    </ul>
+    <h4>A pé</h4>
+    <ul>
+      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar &nbsp; <kbd>Shift</kbd> correr</li>
+      <li><kbd>Espaço</kbd> pular &nbsp; <kbd>Mouse</kbd> olhar</li>
+      <li><kbd>R</kbd> pulso de eco (revela cristais)</li>
+      <li><kbd>V</kbd> 1ª / 3ª pessoa &nbsp; <kbd>Roda</kbd> zoom</li>
+      <li><kbd>F</kbd> entrar na nave (perto dela)</li>
+    </ul>
+    <h4>Geral</h4>
+    <ul><li><kbd>M</kbd> som &nbsp; <kbd>H</kbd> ajuda &nbsp; <kbd>Esc</kbd> pausa</li></ul>
+  </div>
+
+  <!-- Tela inicial / pausa -->
+  <div id="overlay">
+    <div class="card">
+      <div class="logo">ECHO <span>STAR</span></div>
+      <div class="tagline">Explore mini-planetas. Colecione ecos de luz.</div>
+      <div id="overlay-title">Pronto para decolar?</div>
+      <button id="overlay-btn" type="button">Clique para iniciar</button>
+      <div class="keys">
+        <div><kbd>W</kbd><kbd>S</kbd> acelerar &nbsp; <kbd>Mouse</kbd> direção &nbsp; <kbd>Shift</kbd> turbo</div>
+        <div><kbd>L</kbd> pousar &nbsp; <kbd>F</kbd> sair/entrar na nave &nbsp; <kbd>R</kbd> pulso de eco</div>
+        <div><kbd>H</kbd> ajuda completa &nbsp; <kbd>M</kbd> som &nbsp; <kbd>Esc</kbd> pausa</div>
+      </div>
+      <div id="overlay-seed"></div>
+    </div>
+  </div>
+
+  <noscript><p style="color:#fff;padding:2rem">O Echo Star precisa de JavaScript para funcionar.</p></noscript>
+
+  <!-- Three.js (cópia local, funciona sem internet) e código do jogo -->
+  <script src="vendor/three.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/space.js"></script>
+  <script src="js/planet.js"></script>
+  <script src="js/ship.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

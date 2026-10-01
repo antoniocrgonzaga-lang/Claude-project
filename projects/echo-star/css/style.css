@@ -1,0 +1,156 @@
+/* ==========================================================================
+   style.css — Visual do HUD e das telas do Echo Star
+   Tema: ficção científica limpa — vidro escuro, brilho ciano e violeta.
+   Mude as cores nas variáveis abaixo.
+   ========================================================================== */
+:root {
+  --bg: rgba(7, 11, 24, 0.58);
+  --line: rgba(120, 220, 255, 0.22);
+  --accent: #49f2ff;
+  --accent-2: #b98cff;
+  --warm: #ffb43b;
+  --text: #e3eeff;
+  --muted: #8ea3c7;
+  --danger: #ff6a5e;
+  --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #02030a; color: var(--text); font-family: var(--font); }
+canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+
+kbd {
+  display: inline-block; min-width: 1.5em; padding: 1px 6px; margin: 0 1px; text-align: center;
+  font: 600 0.78em/1.5 var(--font); color: var(--accent);
+  background: rgba(73, 242, 255, 0.08); border: 1px solid rgba(73, 242, 255, 0.35); border-radius: 5px;
+}
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; user-select: none; }
+.panel {
+  position: absolute; padding: 10px 14px; min-width: 190px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 24px rgba(73, 242, 255, 0.06), inset 0 0 18px rgba(73, 242, 255, 0.03);
+}
+
+#place-box { top: 16px; left: 16px; }
+#mode-label { font-size: 10px; letter-spacing: 0.28em; color: var(--accent); opacity: 0.85; }
+#planet-name { font-size: 22px; font-weight: 600; letter-spacing: 0.04em; margin-top: 2px; text-shadow: 0 0 14px rgba(73, 242, 255, 0.35); }
+#planet-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; margin-top: 1px; }
+
+#res-box { top: 16px; right: 16px; min-width: 210px; }
+.res-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 13px; }
+.res-name { flex: 1; color: var(--muted); }
+.res-count { font-weight: 700; font-size: 16px; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+.gem { width: 12px; height: 12px; transform: rotate(45deg); border-radius: 2px; box-shadow: 0 0 10px currentColor; }
+.gem.crystal { color: #49f2ff; background: #49f2ff; }
+.gem.core { color: #ffb43b; background: #ffb43b; }
+.gem.essence { color: #d27bff; background: #d27bff; }
+#local-res { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--accent); letter-spacing: 0.05em; display: none; }
+#explored { margin-top: 4px; font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
+
+#flight-box { bottom: 16px; left: 16px; min-width: 240px; }
+#echo-box { bottom: 16px; right: 16px; min-width: 190px; display: none; }
+.stat { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: 0.18em; color: var(--muted); margin-top: 4px; }
+.stat-val { letter-spacing: 0.04em; color: var(--text); font-size: 12px; }
+.stat-val b { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.bar { height: 5px; margin: 5px 0 8px; background: rgba(255, 255, 255, 0.08); border-radius: 3px; overflow: hidden; }
+.fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, #2b7bff, var(--accent)); transition: width 0.08s linear; }
+.fill.fuel { background: linear-gradient(90deg, #19e0a0, #8dffcb); }
+.fill.fuel.low { background: linear-gradient(90deg, var(--danger), var(--warm)); animation: blink 0.8s infinite alternate; }
+.fill.echo { background: linear-gradient(90deg, #7a3cff, var(--accent-2)); }
+.fill.echo.ready { background: linear-gradient(90deg, var(--accent), #b9fbff); box-shadow: 0 0 10px var(--accent); }
+@keyframes blink { to { opacity: 0.45; } }
+
+/* Mensagem de contexto (centro, embaixo) */
+#prompt {
+  position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%);
+  padding: 9px 18px; font-size: 15px; letter-spacing: 0.04em; text-align: center; white-space: nowrap;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity 0.2s;
+}
+#prompt:empty { display: none; }
+#prompt b { color: var(--accent); }
+
+/* Mira */
+#crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0.8; }
+#crosshair::before, #crosshair::after { content: ""; position: absolute; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+#crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%, 0 65%, 100% 65%, 100% 100%, 0 100%); }
+#crosshair::after { top: 10px; left: 0; height: 2px; width: 22px; clip-path: polygon(0 0, 35% 0, 35% 100%, 0 100%, 65% 100%, 65% 0, 100% 0, 100% 100%); }
+
+/* Avisos temporários */
+#toasts { position: absolute; top: 150px; right: 16px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.toast {
+  --c: var(--accent);
+  padding: 7px 14px; font-size: 13px; letter-spacing: 0.03em; color: var(--text);
+  background: var(--bg); border: 1px solid var(--line); border-right: 3px solid var(--c); border-radius: 8px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: toast-in 0.25s ease-out;
+}
+.toast b { color: var(--c); }
+.toast.out { opacity: 0; transform: translateX(14px); transition: all 0.55s ease-in; }
+@keyframes toast-in { from { opacity: 0; transform: translateX(20px); } }
+
+#fps { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--muted); display: none; }
+
+/* Marcadores flutuantes */
+#markers { position: absolute; inset: 0; overflow: hidden; }
+.marker { position: absolute; left: 0; top: 0; will-change: transform; }
+.mk-icon {
+  --c: #fff; position: absolute; left: -7px; top: -7px; width: 14px; height: 14px;
+  border: 2px solid var(--c); transform: rotate(45deg); box-shadow: 0 0 12px var(--c), inset 0 0 6px var(--c); opacity: 0.9;
+}
+.mk-name { position: absolute; left: 14px; top: -16px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; white-space: nowrap; text-shadow: 0 0 6px #000, 0 0 12px #000; }
+.mk-dist { position: absolute; left: 14px; top: 0; font-size: 11px; color: var(--muted); white-space: nowrap; text-shadow: 0 0 6px #000; }
+.marker.edge .mk-icon { border-radius: 50%; transform: none; opacity: 0.65; }
+.marker.edge .mk-name, .marker.edge .mk-dist { opacity: 0.7; }
+.marker.ship .mk-icon { border-radius: 3px; }
+
+/* ---------- Painel de ajuda ---------- */
+#help {
+  position: fixed; left: 16px; top: 120px; width: 330px; padding: 14px 16px; font-size: 13px; line-height: 1.9;
+  background: rgba(7, 11, 24, 0.82); border: 1px solid var(--line); border-radius: 12px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transform: translateX(-120%); transition: transform 0.25s ease; pointer-events: none; z-index: 5;
+}
+#help.open { transform: none; }
+#help h3 { margin: 0 0 6px; font-size: 15px; letter-spacing: 0.1em; color: var(--accent); }
+#help h3 small { color: var(--muted); font-weight: 400; letter-spacing: 0; }
+#help h4 { margin: 8px 0 0; font-size: 11px; letter-spacing: 0.2em; color: var(--accent-2); text-transform: uppercase; }
+#help ul { margin: 0; padding: 0; list-style: none; }
+
+/* ---------- Tela inicial / pausa ---------- */
+#overlay {
+  position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(40, 20, 90, 0.55), rgba(2, 3, 10, 0.88) 70%);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  transition: opacity 0.35s;
+}
+#overlay.hidden { opacity: 0; pointer-events: none; }
+.card { text-align: center; padding: 28px; max-width: 560px; }
+.logo { font-size: clamp(40px, 8vw, 74px); font-weight: 300; letter-spacing: 0.35em; padding-left: 0.35em; text-shadow: 0 0 30px rgba(73, 242, 255, 0.55), 0 0 80px rgba(185, 140, 255, 0.4); }
+.logo span { font-weight: 700; color: var(--accent); }
+.tagline { margin-top: 6px; color: var(--muted); letter-spacing: 0.18em; font-size: 13px; text-transform: uppercase; }
+#overlay-title { margin-top: 34px; font-size: 18px; letter-spacing: 0.06em; }
+#overlay-btn {
+  margin-top: 14px; padding: 14px 38px; font: 600 16px var(--font); letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+  color: #02121a; background: linear-gradient(135deg, var(--accent), #8fd0ff); border: 0; border-radius: 999px;
+  box-shadow: 0 0 28px rgba(73, 242, 255, 0.55); transition: transform 0.15s, box-shadow 0.15s;
+}
+#overlay-btn:hover { transform: scale(1.05); box-shadow: 0 0 44px rgba(73, 242, 255, 0.8); }
+#overlay-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.keys { margin-top: 30px; font-size: 13px; line-height: 2.1; color: var(--muted); }
+#overlay-seed { margin-top: 18px; font-size: 11px; color: rgba(142, 163, 199, 0.6); letter-spacing: 0.1em; }
+
+/* Telas menores */
+@media (max-width: 760px) {
+  .panel { min-width: 0; padding: 8px 10px; }
+  #planet-name { font-size: 17px; }
+  #res-box { min-width: 0; }
+  .res-name { display: none; }
+  #flight-box { min-width: 170px; }
+  #prompt { font-size: 13px; white-space: normal; width: 86vw; border-radius: 14px; bottom: 96px; }
+  #toasts { top: 120px; }
+}
