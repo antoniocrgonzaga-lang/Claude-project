@@ -8,7 +8,7 @@ Cada projeto mora na própria pasta dentro de [`projects/`](projects/), com um `
 
 | Projeto | O que é | Como abrir |
 | --- | --- | --- |
-| 🚀 [**Echo Star**](projects/echo-star/) | Jogo 3D no navegador: voe numa nave, pouse em mini-planetas procedurais e explore a pé coletando cristais. Feito com Three.js. | Baixe [`dist/echo-star.html`](projects/echo-star/dist/echo-star.html) e abra com duplo clique |
+| 🚀 [**Echo Star**](projects/echo-star/) | Jogo 3D no navegador (em inglês, para os clientes do Second Life): explore planetas procedurais, colete recursos, construa colônias, treine unidades, evolua a IA da base até a Lua Tecnológica e enfrente a Brood. Feito com Three.js. | Baixe [`dist/echo-star.html`](projects/echo-star/dist/echo-star.html) e abra com duplo clique |
 
 ## Como o repositório é organizado
 

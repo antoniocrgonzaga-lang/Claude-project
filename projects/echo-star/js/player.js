@@ -1,258 +1,426 @@
-/* ==========================================================================
-   player.js — O astronauta blocado (estilo Lego) e o controle a pé
-   --------------------------------------------------------------------------
-   Andar num planeta redondo: a cada frame
-     1. "cima" = direção do centro do planeta até o jogador;
-     2. o vetor "heading" (para onde a câmera/corpo olha) é mantido paralelo ao chão;
-     3. movemos o jogador ao longo da superfície e depois ajustamos a altura
-        com planet.groundAt() (o chão calculado exatamente, sem raycast).
-   O modelo olha para +Z (frente).
-   ========================================================================== */
-(function () {
-  'use strict';
-  const ES = window.ES;
+/**
+ * Third-person astronaut that walks on spherical planets.
+ *
+ * "Up" is always the direction away from the planet centre, so the player
+ * can walk all the way around a world. The camera keeps its own forward
+ * vector on the tangent plane; WASD moves relative to it.
+ *
+ * Model convention: the character faces local +Z, local +Y is up,
+ * the group origin is at the feet.
+ */
+import * as THREE from 'three';
+import { CONFIG } from './config.js';
+import { clamp, damp, projectOnPlane, anyPerpendicular, quatFromUpForward } from './utils.js';
+import { box, part, merge } from './geometry.js';
 
-  const CFG = {
-    walk: 8.5,          // velocidade andando
-    run: 15,            // velocidade correndo (Shift)
-    jump: 11,           // impulso do pulo
-    gravity: 26,        // gravidade (planetas pequenos = gravidade baixa, pulos altos)
-    bodyRadius: 0.6,    // raio de colisão com árvores/pedras
-    mouseSens: 0.0025,
-  };
+const SUIT = { suit: 0xf0f2f5, panel: 0xd5dbe3, accent: 0xff7a2f, dark: 0x30343c, sole: 0x1b1e23, metal: 0x9aa3ad, gold: 0xd9a441, blue: 0x2f6fd8 };
+const SUIT_MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.08, flatShading: true });
+const METAL_MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.7, flatShading: true });
+/** Small static lights (chest panel, wrist screen, visor glint): HDR colours so they bloom. */
+const GLOW_MAT = new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color(2.4, 2.4, 2.4) });
 
-  const _up = new THREE.Vector3();
-  const _right = new THREE.Vector3();
-  const _wish = new THREE.Vector3();
-  const _dir = new THREE.Vector3();
-  const _newPos = new THREE.Vector3();
-  const _x = new THREE.Vector3();
-  const _t = new THREE.Vector3();
-  const _m = new THREE.Matrix4();
+const _v = new THREE.Vector3();
+const _w = new THREE.Vector3();
+const _push = new THREE.Vector3();
 
-  ES.Player = class Player {
-    constructor(scene) {
-      this.group = new THREE.Group();
-      this.group.visible = false;
-      scene.add(this.group);
+export class Player {
+  constructor() {
+    this.group = new THREE.Group();
+    this.group.name = 'player';
+    this._buildModel();
 
-      this.planet = null;
-      this.pos = new THREE.Vector3();
-      this.up = new THREE.Vector3(0, 1, 0);
-      this.heading = new THREE.Vector3(0, 0, -1);   // direção da câmera, paralela ao chão
-      this.facing = new THREE.Vector3(0, 0, -1);    // direção do corpo
-      this.vel = new THREE.Vector3();
-      this.rad = 0;                                 // distância do centro do planeta
-      this.vUp = 0;
+    this.planet = null;
+    this.position = this.group.position;  // world position of the feet
+    this.up = new THREE.Vector3(0, 1, 0);
+    this.camForward = new THREE.Vector3(0, 0, 1);
+    this.facing = new THREE.Vector3(0, 0, 1);
+    this.hVel = new THREE.Vector3();       // tangential velocity
+    this.vVel = 0;                         // vertical (radial) velocity
+    this.pitch = 0.35;
+    this.grounded = true;
+    this.walkPhase = 0;
+    this.action = null;                    // 'harvest' while E is held on a target
+    this.actionTime = 0;
+    // Phase 3 combat
+    this.hp = CONFIG.player.hp;
+    this.lastHit = -99;
+    this.fireCooldown = 0;
+  }
+
+  // --------------------------------------------------------------- model
+  /**
+   * Blocky astronaut built from vertex-coloured parts merged per joint
+   * (hips → knees, shoulders → elbows, head) so it can walk naturally and
+   * still be only a few draw calls.
+   */
+  _buildModel() {
+    const S = SUIT;
+    const visor = new THREE.MeshStandardMaterial({ color: 0x082a36, emissive: 0x1fd1ff, emissiveIntensity: 1.1, roughness: 0.12, metalness: 0.5, flatShading: true });
+    this.blinkMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 1.2, 0.4) });   // antenna tips + pack status light
+    const add = (parent, parts, mat, shadows = true) => {
+      const m = new THREE.Mesh(merge(parts), mat);
+      m.castShadow = shadows;
+      m.receiveShadow = shadows;
+      parent.add(m);
+      return m;
+    };
+    const body = new THREE.Group();
+    this.group.add(body);
+    this.body = body;
+
+    // ---- legs: hip pivot → thigh (+ holster on the right) → knee pivot → shin + boot
+    this.knees = [];
+    this.legs = [-1, 1].map((s) => {
+      const hip = new THREE.Group();
+      hip.position.set(s * 0.21, 0.78, 0);
+      const thigh = [
+        box(0.36, 0.4, 0.4, S.suit, 0, -0.19, 0),
+        box(0.38, 0.06, 0.42, S.dark, 0, -0.1, 0),
+        box(0.06, 0.16, 0.22, S.panel, s * 0.2, -0.24, 0),            // thigh pocket
+      ];
+      if (s > 0) thigh.push(box(0.1, 0.24, 0.18, S.dark, 0.23, -0.2, 0.04));   // holster
+      add(hip, thigh, SUIT_MAT);
+      if (s > 0) add(hip, [box(0.06, 0.12, 0.1, S.metal, 0.24, -0.05, 0.07)], METAL_MAT);   // blaster grip
+      const knee = new THREE.Group();
+      knee.position.y = -0.38;
+      hip.add(knee);
+      add(knee, [
+        box(0.3, 0.14, 0.1, S.accent, 0, -0.02, 0.2),                 // knee pad
+        box(0.33, 0.3, 0.38, S.suit, 0, -0.16, 0),
+        box(0.36, 0.06, 0.4, S.panel, 0, -0.26, 0),                   // boot cuff
+        box(0.38, 0.14, 0.5, S.dark, 0, -0.33, 0.04),                 // boot
+        box(0.4, 0.04, 0.52, S.sole, 0, -0.39, 0.04),                 // sole
+      ], SUIT_MAT);
+      add(knee, [box(0.3, 0.07, 0.05, S.metal, 0, -0.32, 0.3)], METAL_MAT);   // toe cap
+      body.add(hip);
+      this.knees.push(knee);
+      return hip;
+    });
+
+    // ---- torso: hips, belt with pouches, chest plate + control unit, mission patch, collar
+    add(body, [
+      box(0.84, 0.22, 0.46, S.panel, 0, 0.86, 0),
+      box(0.92, 0.12, 0.5, S.dark, 0, 0.98, 0),
+      box(0.16, 0.14, 0.1, S.panel, -0.28, 0.96, 0.26), box(0.16, 0.14, 0.1, S.panel, 0.3, 0.96, 0.26),
+      box(0.08, 0.14, 0.18, S.dark, -0.47, 0.96, 0), box(0.08, 0.14, 0.18, S.dark, 0.47, 0.96, 0),
+      box(0.9, 0.6, 0.5, S.suit, 0, 1.33, 0),
+      box(0.64, 0.3, 0.06, S.panel, 0, 1.38, 0.27),
+      box(0.3, 0.18, 0.05, S.dark, 0.14, 1.31, 0.3),
+      box(0.12, 0.12, 0.02, S.blue, -0.2, 1.45, 0.3), box(0.06, 0.06, 0.025, S.accent, -0.2, 1.45, 0.31),
+      box(0.04, 0.42, 0.04, S.dark, -0.33, 1.3, 0.26),                // suit hose
+      box(0.94, 0.07, 0.52, S.accent, 0, 1.56, 0),                    // collar stripe
+    ], SUIT_MAT);
+    add(body, [box(0.16, 0.1, 0.04, S.metal, 0, 0.98, 0.26), box(0.62, 0.1, 0.5, S.metal, 0, 1.64, 0)], METAL_MAT);
+    add(body, [
+      box(0.05, 0.04, 0.02, 0x7dff9a, 0.06, 1.34, 0.33), box(0.05, 0.04, 0.02, 0xffd84d, 0.14, 1.34, 0.33),
+      box(0.05, 0.04, 0.02, 0x4df3ff, 0.22, 1.34, 0.33), box(0.2, 0.03, 0.02, 0x4df3ff, 0.14, 1.27, 0.33),
+    ], GLOW_MAT, false);
+
+    // ---- life-support pack: oxygen tanks, vents, status light, antenna, jump-jet nozzles
+    add(body, [
+      box(0.66, 0.7, 0.3, S.panel, 0, 1.28, -0.39),
+      box(0.68, 0.08, 0.32, S.accent, 0, 1.66, -0.39),
+      box(0.18, 0.05, 0.05, S.dark, 0, 1.56, -0.56), box(0.18, 0.05, 0.05, S.dark, 0, 1.48, -0.56),
+      box(0.5, 0.1, 0.2, S.dark, 0, 0.9, -0.42),                      // jet manifold
+    ], SUIT_MAT);
+    add(body, [
+      ...[-1, 1].flatMap((s) => [
+        part(new THREE.CylinderGeometry(0.11, 0.11, 0.6, 8), S.metal, { x: s * 0.22, y: 1.26, z: -0.6 }),
+        part(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 8), S.dark, { x: s * 0.22, y: 1.59, z: -0.6 }),
+        part(new THREE.CylinderGeometry(0.06, 0.09, 0.12, 8), S.dark, { x: s * 0.2, y: 0.8, z: -0.42 }),
+      ]),
+      box(0.03, 0.45, 0.03, S.dark, 0.27, 1.9, -0.42),
+    ], METAL_MAT);
+    add(body, [box(0.06, 0.26, 0.03, 0xffffff, 0, 1.22, -0.555), box(0.07, 0.07, 0.07, 0xffffff, 0.27, 2.14, -0.42)], this.blinkMat, false);
+    // jump-jet flames (visible while airborne)
+    const jetGeo = new THREE.ConeGeometry(0.08, 0.5, 8);
+    jetGeo.rotateX(Math.PI);
+    jetGeo.translate(0, -0.25, 0);
+    const jetMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+    jetMat.color.setRGB(3, 1.5, 0.45);
+    this.jets = [-1, 1].map((s) => {
+      const j = new THREE.Mesh(jetGeo, jetMat);
+      j.position.set(s * 0.2, 0.74, -0.42);
+      j.visible = false;
+      body.add(j);
+      return j;
+    });
+    this.jetLevel = 0;
+
+    // ---- arms: shoulder pivot → upper arm + pad → elbow pivot → forearm, cuff, glove (wrist computer on the left)
+    this.elbows = [];
+    this.arms = [-1, 1].map((s) => {
+      const sh = new THREE.Group();
+      sh.position.set(s * 0.58, 1.5, 0);
+      add(sh, [box(0.36, 0.16, 0.4, S.accent, 0, 0.02, 0), box(0.27, 0.36, 0.3, S.suit, 0, -0.17, 0)], SUIT_MAT);
+      const el = new THREE.Group();
+      el.position.y = -0.36;
+      sh.add(el);
+      const fore = [
+        box(0.24, 0.08, 0.28, S.dark, 0, 0, 0),
+        box(0.25, 0.26, 0.29, S.suit, 0, -0.16, 0),
+        box(0.28, 0.06, 0.31, S.panel, 0, -0.3, 0),
+        box(0.22, 0.17, 0.24, S.dark, 0, -0.41, 0.02),
+        box(0.07, 0.1, 0.08, S.dark, -s * 0.12, -0.38, 0.1),          // thumb
+      ];
+      if (s < 0) fore.push(box(0.06, 0.16, 0.2, S.dark, -0.14, -0.14, 0));
+      add(el, fore, SUIT_MAT);
+      if (s < 0) add(el, [box(0.02, 0.1, 0.14, 0x4df3ff, -0.175, -0.14, 0)], GLOW_MAT, false);   // wrist screen
+      body.add(sh);
+      this.elbows.push(el);
+      return sh;
+    });
+
+    // ---- helmet: shell, side + back plates, wrap-around visor with gold brow, lamp, comm discs, antenna
+    const head = new THREE.Group();
+    head.position.set(0, 1.62, 0);
+    add(head, [
+      box(0.4, 0.08, 0.4, S.dark, 0, 0.03, 0),
+      box(0.62, 0.54, 0.58, S.suit, 0, 0.33, 0),
+      box(0.5, 0.08, 0.46, S.suit, 0, 0.63, 0),
+      box(0.06, 0.42, 0.36, S.panel, -0.33, 0.33, -0.07), box(0.06, 0.42, 0.36, S.panel, 0.33, 0.33, -0.07),
+      box(0.48, 0.42, 0.05, S.panel, 0, 0.33, -0.31),
+      box(0.6, 0.05, 0.07, S.gold, 0, 0.5, 0.3),
+      box(0.6, 0.04, 0.07, S.dark, 0, 0.17, 0.3),
+      box(0.12, 0.1, 0.14, S.dark, 0.37, 0.47, 0.1),
+      box(0.03, 0.32, 0.03, S.dark, 0.2, 0.78, -0.12),
+    ], SUIT_MAT);
+    add(head, [-1, 1].map((s) => part(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 8), S.metal, { rz: Math.PI / 2, x: s * 0.37, y: 0.3, z: -0.05 })), METAL_MAT);
+    add(head, [
+      box(0.52, 0.29, 0.06, 0xffffff, 0, 0.33, 0.3),
+      box(0.05, 0.22, 0.16, 0xffffff, -0.3, 0.33, 0.22), box(0.05, 0.22, 0.16, 0xffffff, 0.3, 0.33, 0.22),
+    ], visor);
+    add(head, [
+      box(0.14, 0.03, 0.01, 0xffffff, -0.12, 0.41, 0.335, { rz: 0.5 }),   // visor glint
+      box(0.08, 0.07, 0.02, 0xfff0c8, 0.37, 0.47, 0.175),                 // helmet lamp
+    ], GLOW_MAT, false);
+    add(head, [box(0.07, 0.07, 0.07, 0xffffff, 0.2, 0.97, -0.12)], this.blinkMat, false);
+    body.add(head);
+    this.head = head;
+    this.blinkT = 0;
+  }
+
+  // ------------------------------------------------------------- spawning
+  /** Place the player on a planet at (roughly) a world position. */
+  spawn(planet, worldPos, forwardHint) {
+    this.planet = planet;
+    const local = worldPos.clone().sub(planet.position).normalize();
+    planet.surfacePoint(local, this.position).add(planet.position);
+    this.up.copy(local);
+    this.camForward.copy(forwardHint || anyPerpendicular(local));
+    projectOnPlane(this.camForward, this.up).normalize();
+    this.facing.copy(this.camForward);
+    this.hVel.set(0, 0, 0);
+    this.vVel = 0;
+    this.pitch = 0.35;
+    this.group.visible = true;
+    this._orient();
+  }
+
+  // --------------------------------------------------------------- update
+  /**
+   * @param obstacles extra obstacles in world space: [{ pos, r }]
+   */
+  /** True when the player is pressing a movement key this frame (cancels auto-walk). */
+  static manualMove(input) {
+    return input.isDown('KeyW') || input.isDown('KeyA') || input.isDown('KeyS') || input.isDown('KeyD');
+  }
+
+  update(dt, input, obstacles = [], autoDir = null) {
+    const P = CONFIG.player;
+    const planet = this.planet;
+    const center = planet.position;
+    this.up.copy(this.position).sub(center).normalize();
+    const up = this.up;
+
+    // ---- mouse look (yaw rotates camForward around up)
+    this.camForward.applyAxisAngle(up, -input.mouse.dx * P.mouseSensitivity);
+    this.pitch = clamp(this.pitch + input.mouse.dy * P.mouseSensitivity, P.cameraMinPitch, P.cameraMaxPitch);
+    projectOnPlane(this.camForward, up);
+    if (this.camForward.lengthSq() < 1e-6) anyPerpendicular(up, this.camForward);
+    this.camForward.normalize();
+    const right = _v.crossVectors(this.camForward, up).normalize();
+
+    // ---- desired horizontal movement
+    const fwdIn = input.axis('KeyS', 'KeyW');
+    const sideIn = input.axis('KeyA', 'KeyD');
+    const move = new THREE.Vector3().addScaledVector(this.camForward, fwdIn).addScaledVector(right, sideIn);
+    let moving = move.lengthSq() > 0.01;
+    let running = input.isDown('ShiftLeft') || input.isDown('ShiftRight');
+    // Auto-walk (ship locator): follow the given direction when no keys are pressed,
+    // and slowly turn the camera to look where we are going.
+    if (!moving && autoDir) {
+      move.copy(autoDir);
+      projectOnPlane(move, up);
+      moving = move.lengthSq() > 1e-6;
+      running = true;
+      if (moving && input.mouse.dx === 0) this.camForward.lerp(_w.copy(move).normalize(), 1 - Math.exp(-2.5 * dt)).normalize();
+    }
+    if (moving) move.normalize();
+    const speed = this.action ? 0 : running ? P.runSpeed : P.walkSpeed;
+    move.multiplyScalar(speed);
+    projectOnPlane(this.hVel, up);
+    this.hVel.lerp(move, 1 - Math.exp(-P.acceleration * dt));
+
+    // ---- jump + gravity
+    if (this.grounded && input.wasPressed('Space') && !this.action) {
+      this.vVel = P.jumpVelocity;
+      this.grounded = false;
+    }
+    this.vVel -= P.gravity * dt;
+    this.position.addScaledVector(this.hVel, dt).addScaledVector(up, this.vVel * dt);
+
+    // ---- simple obstacle push-out (trees, rocks, ship)
+    const local = this.position.clone().sub(center);
+    for (const o of planet.obstacles) {
+      if (planet.resources && !planet.resources.isObstacleActive(o)) continue;
+      this._pushOut(local, o.pos, o.r);
+    }
+    for (const o of obstacles) {
+      this._pushOut(local, _push.copy(o.pos).sub(center), o.r);
+    }
+    this.position.copy(local).add(center);
+
+    // ---- ground snap
+    const dist = local.length();
+    const dir = local.divideScalar(dist);
+    const groundR = planet.groundRadius(dir);
+    if (dist <= groundR) {
+      this.position.copy(center).addScaledVector(dir, groundR);
+      this.vVel = 0;
       this.grounded = true;
-      this.camPitch = 0.18;
-      this.camDist = 7.5;
-      this.firstPerson = false;
-      this.walkPhase = 0;
-      this.moveAmount = 0;
-      this.speedNow = 0;
-      this.justLanded = false;
-      this.ground = { point: new THREE.Vector3(), normal: new THREE.Vector3(0, 1, 0) };
-
-      this._build();
+    } else {
+      this.grounded = dist - groundR < 0.05 && this.vVel <= 0;
     }
+    this.up.copy(dir);
 
-    /* ======================= MODELO ======================= */
-    _build() {
-      const mat = (color, extra) => new THREE.MeshPhongMaterial(Object.assign({ color, flatShading: true, shininess: 10, specular: 0x111111 }, extra || {}));
-      // "emissive" dá um brilho próprio leve ao traje, para o astronauta continuar visível à noite.
-      const suit = mat(0xf2f5f8, { emissive: 0x2a2f3a }), pants = mat(0x2d4a8a, { emissive: 0x0e1830 }), skin = mat(0xffd23f, { emissive: 0x3a2e08 }), pack = mat(0x6f7c8a, { emissive: 0x1a1e24 });
-      const orange = mat(0xff7a2e), dark = new THREE.MeshBasicMaterial({ color: 0x1a1a22 });
-      const glow = new THREE.MeshBasicMaterial({ color: 0x49f2ff });
-      const visor = new THREE.MeshPhongMaterial({ color: 0x9fe6ff, transparent: true, opacity: 0.28, shininess: 100, depthWrite: false });
-      const box = (w, h, d, material, x, y, z, parent) => {
-        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-        m.position.set(x, y, z);
-        (parent || this.model).add(m);
-        return m;
-      };
+    // ---- face the movement direction (or the target while harvesting)
+    const hSpeed = this.hVel.length();
+    if (hSpeed > 0.3) {
+      _v.copy(this.hVel).normalize();
+      this.facing.lerp(_v, 1 - Math.exp(-10 * dt));
+    }
+    projectOnPlane(this.facing, this.up);
+    if (this.facing.lengthSq() < 1e-6) this.facing.copy(this.camForward);
+    this.facing.normalize();
+    this._orient();
+    this._animate(dt, hSpeed);
+  }
 
-      this.model = new THREE.Group();
-      this.model.scale.setScalar(0.85);
-      this.group.add(this.model);
+  /** Push a planet-local point out of a circular obstacle (on the tangent plane). */
+  _pushOut(local, obstaclePos, r) {
+    const min = r + CONFIG.player.radius;
+    const dx = local.x - obstaclePos.x, dy = local.y - obstaclePos.y, dz = local.z - obstaclePos.z;
+    const d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 > (min + 3) * (min + 3)) return;
+    const n = this.up;
+    const diff = new THREE.Vector3(dx, dy, dz);
+    projectOnPlane(diff, n);
+    const d = diff.length();
+    // Only collide if roughly at the same height (lets you jump on/over small things).
+    const vertical = Math.abs(dx * n.x + dy * n.y + dz * n.z);
+    if (d < min && d > 1e-4 && vertical < 2.5) {
+      local.addScaledVector(diff.divideScalar(d), min - d);
+    }
+  }
 
-      // Pernas (pivô no quadril, para balançar ao andar).
-      this.legL = new THREE.Group(); this.legL.position.set(-0.28, 0.85, 0);
-      this.legR = new THREE.Group(); this.legR.position.set(0.28, 0.85, 0);
-      for (const leg of [this.legL, this.legR]) {
-        box(0.46, 0.85, 0.5, pants, 0, -0.425, 0, leg);
-        box(0.5, 0.18, 0.62, mat(0x22262e), 0, -0.8, 0.06, leg);        // bota
-        this.model.add(leg);
+  _orient() {
+    quatFromUpForward(this.up, this.facing, this.group.quaternion);
+  }
+
+  _animate(dt, hSpeed) {
+    const moving = hSpeed > 0.4 && this.grounded;
+    this.walkPhase += dt * (moving ? hSpeed * 1.6 : 0);
+    const swing = moving ? Math.sin(this.walkPhase) * Math.min(1, hSpeed / 6) * 0.8 : 0;
+    const air = this.grounded ? 0 : 1;
+    const stride = Math.min(1, hSpeed / 6);
+    for (let i = 0; i < 2; i++) {
+      const s = i === 0 ? 1 : -1;
+      this.legs[i].rotation.x = damp(this.legs[i].rotation.x, swing * s - air * 0.4 * s, 14, dt);
+      this.arms[i].rotation.x = damp(this.arms[i].rotation.x, -swing * s * 0.9 - air * 0.9, 14, dt);
+      this.arms[i].rotation.z = damp(this.arms[i].rotation.z, (i === 0 ? -1 : 1) * air * 0.3, 10, dt);
+      // knees bend while a leg swings forward; elbows stay a little bent and pump with the stride
+      const knee = moving ? (0.12 + 0.8 * Math.max(0, -Math.cos(this.walkPhase) * s)) * stride : 0;
+      this.knees[i].rotation.x = damp(this.knees[i].rotation.x, knee + air * 0.7, 14, dt);
+      this.elbows[i].rotation.x = damp(this.elbows[i].rotation.x, -0.22 - Math.abs(swing) * 0.4 - air * 0.3, 12, dt);
+    }
+    if (this.action === 'harvest') {
+      this.actionTime += dt;
+      // right arm chops, left arm braces
+      this.arms[1].rotation.x = -1.6 + Math.sin(this.actionTime * 11) * 0.9;
+      this.elbows[1].rotation.x = -0.45 + Math.sin(this.actionTime * 11) * 0.35;
+      this.arms[0].rotation.x = -0.6;
+      this.elbows[0].rotation.x = -0.9;
+    } else {
+      this.actionTime = 0;
+    }
+    // jump jets fire while airborne; antenna and pack lights blink
+    this.jetLevel = damp(this.jetLevel, air, 12, dt);
+    for (const j of this.jets) {
+      j.visible = this.jetLevel > 0.05;
+      j.scale.set(1, this.jetLevel * (0.75 + Math.random() * 0.5), 1);
+    }
+    this.blinkT += dt;
+    this.blinkMat.color.setRGB(3, 1.2, 0.4).multiplyScalar(this.blinkT % 1.4 < 0.18 ? 1 : 0.12);
+    // small idle bob of the body
+    this.body.position.y = moving ? Math.abs(Math.cos(this.walkPhase)) * 0.06 : damp(this.body.position.y, 0, 8, dt);
+  }
+
+  // --------------------------------------------------------------- camera
+  getCameraPose(pose, dt = 0.016) {
+    const P = CONFIG.player;
+    const planet = this.planet;
+    const up = this.up;
+    pose.target.copy(this.position).addScaledVector(up, P.cameraTargetHeight);
+    // Boom direction from the target back toward the camera.
+    const boom = new THREE.Vector3()
+      .addScaledVector(this.camForward, -Math.cos(this.pitch))
+      .addScaledVector(up, Math.sin(this.pitch));
+    pose.position.copy(pose.target).addScaledVector(boom, P.cameraDistance);
+    // Trees between the camera and the player turn translucent.
+    planet.decor.setGhosted(this._occluders(pose.target, boom, P.cameraDistance));
+    // keep the camera above the ground
+    const local = _v.copy(pose.position).sub(planet.position);
+    const d = local.length();
+    local.divideScalar(d);
+    const minR = planet.groundRadius(local) + 0.7;
+    if (d < minR) pose.position.copy(planet.position).addScaledVector(local, minR);
+    pose.up.copy(up);
+    return pose;
+  }
+
+  /**
+   * Ray-sphere test from the camera target back along the boom against the
+   * canopy and trunk of nearby trees. Returns the flora instance indices
+   * that hide the player.
+   */
+  _occluders(target, boom, maxDist) {
+    const planet = this.planet;
+    const out = [];
+    const c = new THREE.Vector3(), oc = new THREE.Vector3(), oUp = new THREE.Vector3();
+    for (const o of planet.obstacles) {
+      if (o.flora === undefined) continue;
+      c.copy(o.pos).add(planet.position);
+      if (c.distanceToSquared(target) > (maxDist + 6) ** 2) continue;
+      oUp.copy(o.pos).normalize();
+      for (const [h, r] of [[o.cam * 2.1, o.cam * 1.1], [1.0, 0.5]]) {   // canopy, trunk
+        oc.copy(target).sub(c).addScaledVector(oUp, -h);
+        const b = oc.dot(boom);
+        const cc = oc.lengthSq() - r * r;
+        const disc = b * b - cc;
+        if (disc < 0) continue;
+        const tEnter = -b - Math.sqrt(disc), tExit = -b + Math.sqrt(disc);
+        if (tExit > 0 && tEnter < maxDist) { out.push(o.flora); break; }
       }
-      // Tronco.
-      box(1.1, 0.95, 0.6, suit, 0, 1.325, 0);
-      box(0.9, 0.22, 0.06, orange, 0, 1.45, 0.33);                       // faixa no peito
-      box(0.2, 0.2, 0.06, glow, 0.25, 1.1, 0.33);                        // luzinha
-      // Braços (pivô no ombro).
-      this.armL = new THREE.Group(); this.armL.position.set(-0.74, 1.72, 0);
-      this.armR = new THREE.Group(); this.armR.position.set(0.74, 1.72, 0);
-      for (const arm of [this.armL, this.armR]) {
-        box(0.34, 0.85, 0.36, suit, 0, -0.4, 0, arm);
-        box(0.3, 0.22, 0.32, skin, 0, -0.9, 0, arm);                      // mão
-        this.model.add(arm);
-      }
-      // Cabeça estilo Lego + capacete de vidro.
-      box(0.8, 0.72, 0.8, skin, 0, 2.2, 0);
-      box(0.11, 0.16, 0.05, dark, -0.18, 2.27, 0.41);                    // olhos
-      box(0.11, 0.16, 0.05, dark, 0.18, 2.27, 0.41);
-      box(0.34, 0.06, 0.05, dark, 0, 2.05, 0.41);                        // sorriso
-      box(1.02, 0.96, 1.02, visor, 0, 2.2, 0);                           // capacete
-      box(1.08, 0.12, 1.08, orange, 0, 1.78, 0);                         // anel do capacete
-      // Mochila + antena.
-      box(0.85, 1.0, 0.36, pack, 0, 1.35, -0.48);
-      box(0.12, 0.5, 0.12, pack, 0.3, 2.05, -0.5);
-      box(0.18, 0.18, 0.18, glow, 0.3, 2.35, -0.5);
-
-      // Lanterna do capacete (liga à noite).
-      this.headlamp = new THREE.PointLight(0xfff0cc, 0, 48, 1.4);
-      this.headlamp.position.set(0, 2.4, 0.5);
-      this.group.add(this.headlamp);
     }
+    return out.sort((a, b) => a - b);
+  }
 
-    /* ======================= SPAWN ======================= */
-    /** Coloca o personagem na superfície perto de worldPos, olhando para headingHint. */
-    spawnAt(planet, worldPos, headingHint) {
-      this.planet = planet;
-      _dir.copy(worldPos).sub(planet.center).normalize();
-      const g = planet.groundAt(_dir);
-      this.rad = g.r;
-      this.pos.copy(planet.center).addScaledVector(_dir, this.rad);
-      this.up.copy(_dir);
-      this.heading.copy(headingHint).addScaledVector(this.up, -headingHint.dot(this.up));
-      if (this.heading.lengthSq() < 1e-4) this.heading.set(1, 0, 0).cross(this.up);
-      this.heading.normalize();
-      this.facing.copy(this.heading);
-      this.vel.set(0, 0, 0);
-      this.vUp = 0;
-      this.grounded = true;
-      this.group.visible = true;
-      this._applyTransform();
-    }
-
-    hide() { this.group.visible = false; }
-
-    /* ======================= ATUALIZAÇÃO ======================= */
-    update(dt, input) {
-      const planet = this.planet;
-      this.justLanded = false;
-      _up.copy(this.pos).sub(planet.center).normalize();
-      this.up.copy(_up);
-
-      // --- Olhar (mouse / setas) ---
-      const m = input.takeMouse();
-      const turn = -m.x * CFG.mouseSens + ((input.down('ArrowLeft') ? 1 : 0) - (input.down('ArrowRight') ? 1 : 0)) * 1.9 * dt;
-      const tilt = -m.y * 0.0022 + ((input.down('ArrowUp') ? 1 : 0) - (input.down('ArrowDown') ? 1 : 0)) * 1.2 * dt;
-      const lo = this.firstPerson ? -1.4 : -0.5, hi = this.firstPerson ? 1.4 : 1.1;
-      this.camPitch = ES.clamp(this.camPitch + tilt, lo, hi);
-      if (input.wheel) this.camDist = ES.clamp(this.camDist + input.wheel * 0.006, 3.5, 16);
-
-      // Mantém "heading" paralelo ao chão (o "cima" muda conforme andamos pela esfera).
-      this.heading.addScaledVector(_up, -this.heading.dot(_up));
-      if (this.heading.lengthSq() < 1e-6) this.heading.set(1, 0, 0).cross(_up);
-      this.heading.normalize().applyAxisAngle(_up, turn);
-      _right.crossVectors(this.heading, _up);       // frente × cima = direita
-
-      // --- Movimento desejado ---
-      const f = (input.down('KeyW') ? 1 : 0) - (input.down('KeyS') ? 1 : 0);
-      const s = (input.down('KeyD') ? 1 : 0) - (input.down('KeyA') ? 1 : 0);
-      _wish.set(0, 0, 0).addScaledVector(this.heading, f).addScaledVector(_right, s);
-      const hasInput = _wish.lengthSq() > 0;
-      if (hasInput) _wish.normalize();
-      const topSpeed = input.shift() ? CFG.run : CFG.walk;
-      _wish.multiplyScalar(hasInput ? topSpeed : 0);
-
-      this.vel.addScaledVector(_up, -this.vel.dot(_up));   // velocidade sempre paralela ao chão
-      this.vel.lerp(_wish, 1 - Math.exp(-(this.grounded ? 14 : 3.5) * dt));
-      this.speedNow = this.vel.length();
-
-      // --- Pulo ---
-      if (this.grounded && input.pressed('Space')) {
-        this.vUp = CFG.jump;
-        this.grounded = false;
-      }
-
-      // --- Mover, desviar de obstáculos, ajustar à altura do chão ---
-      _newPos.copy(this.pos).addScaledVector(this.vel, dt);
-      planet.pushOutObstacles(_newPos, CFG.bodyRadius);
-      _dir.copy(_newPos).sub(planet.center).normalize();
-      const g = planet.groundAt(_dir);
-
-      if (this.grounded) {
-        if (g.r >= this.rad) this.rad = g.r;                          // degrau para cima: sobe na hora
-        else this.rad = Math.max(g.r, ES.damp(this.rad, g.r, 26, dt)); // para baixo: desce rápido
-        if (this.rad - g.r > 0.55) { this.grounded = false; this.vUp = 0; }   // borda alta: começa a cair
-      } else {
-        this.vUp -= CFG.gravity * dt;
-        this.rad += this.vUp * dt;
-        if (this.rad <= g.r) {
-          this.rad = g.r;
-          if (this.vUp < -6) this.justLanded = true;
-          this.vUp = 0;
-          this.grounded = true;
-        }
-      }
-      this.pos.copy(planet.center).addScaledVector(_dir, this.rad);
-      this.up.copy(_dir);
-      this.ground.point.copy(planet.center).addScaledVector(_dir, g.r);
-      this.ground.normal.copy(g.normal);
-
-      // --- Corpo vira para onde andamos (1ª pessoa: para onde olhamos) ---
-      this.facing.addScaledVector(this.up, -this.facing.dot(this.up));
-      if (this.facing.lengthSq() < 1e-6) this.facing.copy(this.heading);
-      this.facing.normalize();
-      const want = (hasInput && !this.firstPerson) ? _wish : this.heading;
-      if (want.lengthSq() > 1e-6) {
-        _x.copy(want).normalize();
-        // Ângulo (com sinal) de "facing" até "want", em torno do eixo "cima".
-        _t.crossVectors(this.facing, _x);
-        const ang = Math.atan2(this.up.dot(_t), this.facing.dot(_x));
-        this.facing.applyAxisAngle(this.up, ang * (1 - Math.exp(-(this.firstPerson ? 30 : 13) * dt)));
-      }
-
-      this._animate(dt);
-      this._applyTransform();
-    }
-
-    _animate(dt) {
-      const moving = ES.clamp(this.speedNow / CFG.run, 0, 1.15);
-      this.moveAmount = ES.damp(this.moveAmount, this.grounded ? moving : 0, 12, dt);
-      this.walkPhase += this.speedNow * dt * 0.75;
-      const sw = Math.sin(this.walkPhase) * 0.85 * ES.clamp(this.moveAmount * 1.6, 0, 1);
-      if (this.grounded) {
-        this.legL.rotation.x = sw; this.legR.rotation.x = -sw;
-        this.armL.rotation.x = -sw * 0.9; this.armR.rotation.x = sw * 0.9;
-        const idle = Math.sin(performance.now() * 0.002) * 0.03;
-        this.armL.rotation.z = -0.05 - idle; this.armR.rotation.z = 0.05 + idle;
-        this.model.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.09 * this.moveAmount;
-      } else {
-        // No ar: braços para cima, pernas abertas.
-        this.legL.rotation.x = ES.damp(this.legL.rotation.x, 0.35, 12, dt);
-        this.legR.rotation.x = ES.damp(this.legR.rotation.x, -0.25, 12, dt);
-        this.armL.rotation.x = ES.damp(this.armL.rotation.x, -2.5, 12, dt);
-        this.armR.rotation.x = ES.damp(this.armR.rotation.x, -2.5, 12, dt);
-        this.model.position.y = 0;
-      }
-      this.model.visible = !(this.firstPerson);   // em 1ª pessoa não vemos o próprio corpo
-    }
-
-    _applyTransform() {
-      this.group.position.copy(this.pos);
-      _x.crossVectors(this.up, this.facing).normalize();   // eixo X local do modelo
-      _m.makeBasis(_x, this.up, this.facing);
-      this.group.quaternion.setFromRotationMatrix(_m);
-    }
-
-    /** Posição dos olhos (para câmera em primeira pessoa e pulso de eco). */
-    eyePosition(out) { return out.copy(this.pos).addScaledVector(this.up, 1.85); }
-
-    /** Direção para onde a câmera olha, a partir de heading e camPitch. */
-    lookDirection(out) {
-      return out.copy(this.heading).multiplyScalar(Math.cos(this.camPitch)).addScaledVector(this.up, Math.sin(this.camPitch));
-    }
-  };
-})();
+  serialize() {
+    return {
+      planet: this.planet ? this.planet.index : -1,
+      pos: this.position.toArray(),
+      forward: this.camForward.toArray(),
+    };
+  }
+}

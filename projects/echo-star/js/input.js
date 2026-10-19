@@ -1,70 +1,90 @@
-/* ==========================================================================
-   input.js — Teclado, mouse (com "pointer lock") e roda do mouse
-   --------------------------------------------------------------------------
-   Usamos event.code (ex.: "KeyW"), que é a posição física da tecla — funciona
-   em qualquer layout de teclado (ABNT2, US...).
-     input.down('KeyW')     true enquanto a tecla está pressionada
-     input.pressed('KeyF')  true só no frame em que foi apertada
-   ========================================================================== */
-(function () {
-  'use strict';
-  const ES = window.ES;
+/**
+ * Keyboard + mouse input.
+ *
+ * - isDown(code)     → key currently held (KeyboardEvent.code, e.g. 'KeyW')
+ * - wasPressed(code) → key went down this frame
+ * - mouse.dx / dy    → mouse movement this frame. Counts when the pointer
+ *                      is locked OR while the left/right button is dragged,
+ *                      so the game also works where pointer lock is blocked.
+ */
+const BLOCK_DEFAULT = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
-  ES.Input = class Input {
-    constructor(canvas) {
-      this.canvas = canvas;
-      this.keys = new Set();
-      this.edge = new Set();
-      this.mx = 0;
-      this.my = 0;
-      this.wheel = 0;
-      this.locked = false;
-      this.onLockChange = null;
+export class Input {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.keys = new Set();
+    this.pressed = new Set();
+    // x / y: cursor position in CSS pixels · clicks: buttons pressed on the
+    // canvas this frame (0 left, 2 right) · wheel: scroll this frame
+    // releases: buttons released this frame, with how far the mouse moved while held
+    // (lets build mode tell a click from a drag).
+    this.mouse = { dx: 0, dy: 0, buttons: 0, x: 0, y: 0, clicks: [], wheel: 0, releases: [], downAt: {} };
+    this.locked = false;
+    this.enabled = true;
 
-      const block = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab']);
-      window.addEventListener('keydown', (e) => {
-        if (block.has(e.code)) e.preventDefault();      // evita rolar a página
-        if (!e.repeat) this.edge.add(e.code);
-        this.keys.add(e.code);
-      });
-      window.addEventListener('keyup', (e) => this.keys.delete(e.code));
-      window.addEventListener('blur', () => this.keys.clear());
+    window.addEventListener('keydown', (e) => {
+      if (BLOCK_DEFAULT.has(e.code)) e.preventDefault();
+      if (!e.repeat) this.pressed.add(e.code);
+      this.keys.add(e.code);
+    });
+    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+    window.addEventListener('blur', () => { this.keys.clear(); this.mouse.buttons = 0; });
 
-      document.addEventListener('pointerlockchange', () => {
-        this.locked = document.pointerLockElement === canvas;
-        if (this.onLockChange) this.onLockChange(this.locked);
-      });
-      document.addEventListener('mousemove', (e) => {
-        if (!this.locked) return;
-        this.mx += e.movementX || 0;
-        this.my += e.movementY || 0;
-      });
-      window.addEventListener('wheel', (e) => { this.wheel += e.deltaY; }, { passive: true });
-    }
+    canvas.addEventListener('mousedown', (e) => {
+      this.mouse.buttons = e.buttons;
+      this.mouse.clicks.push(e.button);
+      this.mouse.downAt[e.button] = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('mouseup', (e) => {
+      this.mouse.buttons = e.buttons;
+      const start = this.mouse.downAt[e.button];
+      if (start) {
+        this.mouse.releases.push({ button: e.button, x: e.clientX, y: e.clientY, sx: start.x, sy: start.y, dist: Math.hypot(e.clientX - start.x, e.clientY - start.y) });
+        delete this.mouse.downAt[e.button];
+      }
+    });
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('wheel', (e) => { this.mouse.wheel += e.deltaY; e.preventDefault(); }, { passive: false });
+    window.addEventListener('mousemove', (e) => {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+      if (!this.enabled) return;
+      if (this.locked || this.mouse.buttons) {
+        this.mouse.dx += e.movementX || 0;
+        this.mouse.dy += e.movementY || 0;
+      }
+    });
+    document.addEventListener('pointerlockchange', () => {
+      this.locked = document.pointerLockElement === canvas;
+      if (this.onLockChange) this.onLockChange(this.locked);
+    });
+  }
 
-    down(code) { return this.keys.has(code); }
-    pressed(code) { return this.edge.has(code); }
-    shift() { return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'); }
+  requestLock() {
+    try {
+      const p = this.canvas.requestPointerLock();
+      if (p && p.catch) p.catch(() => {}); // pointer lock may be unavailable; drag-to-look still works
+    } catch { /* ignore */ }
+  }
 
-    /** Devolve o movimento do mouse acumulado desde a última leitura e zera. */
-    takeMouse() {
-      const m = { x: this.mx, y: this.my };
-      this.mx = 0; this.my = 0;
-      return m;
-    }
+  exitLock() {
+    if (document.pointerLockElement) document.exitPointerLock();
+  }
 
-    /** Chamar no fim de cada frame. */
-    endFrame() {
-      this.edge.clear();
-      this.wheel = 0;
-    }
+  clicked(button = 0) { return this.enabled && this.mouse.clicks.includes(button); }
+  /** Release event of a button this frame ({ x, y, sx, sy, dist }) or null. */
+  released(button = 0) { return (this.enabled && this.mouse.releases.find((r) => r.button === button)) || null; }
+  isDown(code) { return this.enabled && this.keys.has(code); }
+  wasPressed(code) { return this.enabled && this.pressed.has(code); }
+  axis(neg, pos) { return (this.isDown(pos) ? 1 : 0) - (this.isDown(neg) ? 1 : 0); }
 
-    /** Captura o mouse (precisa ser chamado a partir de um clique do usuário). */
-    lock() {
-      try {
-        const p = this.canvas.requestPointerLock && this.canvas.requestPointerLock();
-        if (p && p.catch) p.catch(() => {});
-      } catch (err) { /* sem pointer lock: o teclado continua funcionando */ }
-    }
-  };
-})();
+  /** Call once at the end of every frame. */
+  endFrame() {
+    this.pressed.clear();
+    this.mouse.dx = 0;
+    this.mouse.dy = 0;
+    this.mouse.wheel = 0;
+    this.mouse.clicks.length = 0;
+    this.mouse.releases.length = 0;
+  }
+}

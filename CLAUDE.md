@@ -28,15 +28,20 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 
 ## Echo Star (`projects/echo-star/`)
 
-- Depois de mexer em `js/`, `css/` ou `index.html`, rode `node tools/build.js` e **commite o `dist/echo-star.html` atualizado** junto.
-- Testes (rodar antes de commitar mudanças no jogo):
-  - `node tools/test-ground.js` — altura do chão bate com a malha 3D (só Node).
-  - `node tools/smoke-test.js` — joga uma partida curta num navegador real (precisa do Playwright).
-- Abra com `?seed=123` para um universo sempre igual e `?debug=1` para ver o FPS.
+- **Exceção de idioma: o Echo Star é todo em inglês** (é para os clientes do dono no Second Life):
+  textos do jogo, comentários, README, ferramentas e mensagens de commit que mexem nele.
+- Usa **módulos ES** (exceção à regra dos scripts clássicos): `index.html` só abre por servidor
+  (`start.bat` / `python serve.py 8080`). O arquivo único `dist/echo-star.html` abre com duplo clique.
+- Three.js r160 e as fontes ficam em `vendor/` (sem CDN). Todos os números de balanceamento estão em `js/config.js`.
+- Depois de mexer em `js/`, `css/`, `vendor/` ou `index.html`, rode `node tools/build.js` e **commite o `dist/echo-star.html` atualizado** junto.
+- Testes (rodar antes de commitar mudanças no jogo; precisam do Playwright):
+  - `node tools/smoke-test.js` — joga uma partida curta no `dist/` (voar, pousar, andar, coletar, construir, decolar, salvar).
+  - `node tools/smoke-test.js --dev` — o mesmo no `index.html`, por um servidor local.
+- O jogo fica exposto em `window.game` (útil para testes e depuração no console).
 
 ## Git
 
-- Mensagens de commit curtas, em português, no imperativo (ex.: "Adiciona pulso de eco").
+- Mensagens de commit curtas, em português, no imperativo (ex.: "Adiciona pulso de eco") — exceto no Echo Star (inglês, ex.: "Add echo pulse").
 - Só abrir Pull Request quando o dono pedir.
 
 ## Segurança

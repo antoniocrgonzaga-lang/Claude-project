@@ -1,16 +1,25 @@
 #!/usr/bin/env node
 /* ==========================================================================
-   build.js — Gera a versão em UM ÚNICO arquivo HTML do Echo Star
+   build.js — builds the SINGLE-FILE HTML version of Echo Star
    --------------------------------------------------------------------------
-   Lê index.html e embute dentro dele o CSS e todos os scripts (inclusive o
-   Three.js), criando  dist/echo-star.html .  Esse arquivo sozinho já é o jogo
-   inteiro: pode ser copiado, enviado ou aberto com duplo clique.
+   The game is made of ES modules (import/export). Browsers refuse to load
+   modules from file:// (double-click), only from a server. This script works
+   around that: it reads index.html and embeds into it
 
-   Uso (dentro da pasta projects/echo-star):
+     - the CSS (and the fonts from vendor/fonts, as data: URIs);
+     - every module from js/ and Three.js from vendor/three, with their
+       imports rewritten to fixed names ("echo/js/config.js" etc.);
+     - a tiny loader that turns each module into a Blob URL and builds an
+       import map pointing at them, before the game starts.
+
+   The result, dist/echo-star.html, is the whole game in one file: it opens
+   with a double-click and works offline.
+
+   Usage (inside projects/echo-star):
        node tools/build.js
 
-   Rode de novo sempre que mexer em js/, css/ ou index.html.
-   Não precisa instalar nada — só o Node.js.
+   Run it again whenever you change js/, css/, vendor/ or index.html.
+   Nothing to install — just Node.js.
    ========================================================================== */
 'use strict';
 const fs = require('fs');
@@ -18,23 +27,101 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
+const exists = (rel) => fs.existsSync(path.join(root, rel));
+
+// Prefix of the module names in the single file's import map. It must not
+// start with "./" or "/" nor look like "scheme:" (the browser would treat it as a URL).
+const ID_PREFIX = 'echo/';
+const ENTRY = 'js/main.js';
 
 let html = read('index.html');
 
-// <link rel="stylesheet" href="x.css">  ->  <style>…</style>
-html = html.replace(/<link\s+rel="stylesheet"\s+href="([^"]+)"\s*\/?>/g, (_, href) => {
-  return '<style>\n' + read(href) + '\n</style>';
-});
+// ---------------------------------------------------------------- import map
+// "three" and "three/addons/…" are resolved with the SAME import map as
+// index.html, so there is only one place to change the Three.js version.
+const mapMatch = html.match(/<script\s+type="importmap"\s*>([\s\S]*?)<\/script>\s*/);
+if (!mapMatch) throw new Error('index.html has no <script type="importmap">');
+const importMap = JSON.parse(mapMatch[1]).imports;
+html = html.replace(mapMatch[0], '');
 
-// <script src="x.js"></script>  ->  <script>…</script>
-html = html.replace(/<script\s+src="([^"]+)"\s*><\/script>/g, (_, src) => {
-  // "</script" dentro de um texto de script fecharia a tag antes da hora.
-  const code = read(src).replace(/<\/script/gi, '<\\/script');
-  return '<script>\n' + code + '\n</script>';
+/** Path (relative to the project folder) of the module that "spec" points to from inside "from". */
+function resolve(spec, from) {
+  let target = null;
+  if (spec.startsWith('./') || spec.startsWith('../')) {
+    target = path.posix.join(path.posix.dirname(from), spec);
+  } else if (importMap[spec]) {
+    target = path.posix.normalize(importMap[spec]);
+  } else {
+    // longest prefix ending in "/" (e.g. "three/addons/")
+    const key = Object.keys(importMap).filter((k) => k.endsWith('/') && spec.startsWith(k)).sort((a, b) => b.length - a.length)[0];
+    if (key) target = path.posix.normalize(importMap[key] + spec.slice(key.length));
+  }
+  if (!target || !exists(target)) throw new Error(`Cannot find module "${spec}" imported from ${from}`);
+  return target;
+}
+
+// ------------------------------------------------------------------- modules
+// import … from '…' · export … from '…' · import '…'  (no dynamic import())
+const IMPORT_RE = /\b(import|export)(\s*[\w$*{}\s,]*?\s*from\s*|\s*)(['"])([^'"\r\n]+)\3/g;
+
+const modules = new Map();   // path → rewritten source
+(function collect(file) {
+  if (modules.has(file)) return;
+  modules.set(file, null);   // mark first (guards against circular imports)
+  const deps = [];
+  const code = read(file).replace(IMPORT_RE, (all, kw, mid, q, spec) => {
+    const dep = resolve(spec, file);
+    deps.push(dep);
+    return kw + mid + q + ID_PREFIX + dep + q;
+  });
+  modules.set(file, code);
+  deps.forEach(collect);
+})(ENTRY);
+
+// JSON with "<" escaped: no "</script>" or "<!--" in the code can close the tag early.
+const modulesJson = JSON.stringify(Object.fromEntries([...modules].map(([f, code]) => [ID_PREFIX + f, code])))
+  .replace(/</g, '\\u003c');
+
+const loader = `<script>
+/* Single-file loader (generated by tools/build.js — do not edit here).
+   Each module becomes a Blob URL; the import map links the "echo/…" names to them. */
+(function () {
+  var mods = ${modulesJson};
+  var imports = {};
+  for (var id in mods) imports[id] = URL.createObjectURL(new Blob([mods[id]], { type: 'text/javascript' }));
+  var map = document.createElement('script');
+  map.type = 'importmap';
+  map.textContent = JSON.stringify({ imports: imports });
+  document.currentScript.after(map);
+})();
+</script>
+<script type="module">import '${ID_PREFIX}${ENTRY}';</script>`;
+
+// The entry <script type="module"> is replaced by the loader. The entry is
+// still a parser-inserted module (not injected), so the browser runs it
+// before DOMContentLoaded — which is when the game boots.
+const entryTag = /<script\s+type="module"\s+src="([^"]+)"\s*><\/script>/;
+const entryMatch = html.match(entryTag);
+if (!entryMatch || path.posix.normalize(entryMatch[1]) !== ENTRY) throw new Error(`index.html should load <script type="module" src="${ENTRY}">`);
+html = html.replace(entryTag, () => loader);
+
+// ------------------------------------------------------------------------ CSS
+// <link rel="stylesheet" href="x.css">  ->  <style>…</style>, with url(...)
+// fonts/images turned into data: URIs (paths relative to the .css file).
+const MIME = { '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+html = html.replace(/<link\s+rel="stylesheet"\s+href="([^"]+)"\s*\/?>/g, (_, href) => {
+  const css = read(href).replace(/url\((['"]?)([^'")]+)\1\)/g, (all, q, url) => {
+    if (/^(data:|https?:|#)/.test(url)) return all;
+    const file = path.posix.join(path.posix.dirname(href), url);
+    const mime = MIME[path.extname(file).toLowerCase()];
+    if (!mime) throw new Error(`Unknown file type in ${href}: ${url}`);
+    return `url(data:${mime};base64,${fs.readFileSync(path.join(root, file)).toString('base64')})`;
+  });
+  return '<style>\n' + css.replace(/<\/style/gi, '<\\/style') + '\n</style>';
 });
 
 const outDir = path.join(root, 'dist');
 fs.mkdirSync(outDir, { recursive: true });
 const out = path.join(outDir, 'echo-star.html');
 fs.writeFileSync(out, html);
-console.log('Gerado: ' + path.relative(process.cwd(), out) + ' (' + Math.round(html.length / 1024) + ' KB)');
+console.log(`Built: ${path.relative(process.cwd(), out)} (${Math.round(Buffer.byteLength(html) / 1024)} KB, ${modules.size} modules)`);
