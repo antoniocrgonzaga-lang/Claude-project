@@ -1,123 +1,168 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Echo Star</title>
-  <meta name="description" content="Echo Star — explore mini-planetas procedurais numa nave espacial e a pé. Um jogo 3D no navegador feito com Three.js.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Three.js r160 is copied in vendor/ (no CDN: works offline).
+       This page uses ES modules, so it needs a local server (start.bat / serve.py).
+       To open the game with a double-click, use dist/echo-star.html (built by tools/build.js). -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.min.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
 </head>
 <body>
-  <!-- Cena 3D -->
   <canvas id="game"></canvas>
 
-  <!-- ===== HUD ===== -->
-  <div id="hud">
-    <!-- Marcadores flutuantes de planetas e da nave -->
-    <div id="markers"></div>
+  <!-- ============================== HUD ============================== -->
+  <div id="hud" class="hidden">
+    <div id="resource-bar">
+      <div class="res" data-res="crystals"><i class="ico crystals"></i><span>Crystals</span><b>0</b></div>
+      <div class="res" data-res="iron"><i class="ico iron"></i><span>Iron</span><b>0</b></div>
+      <div class="res" data-res="rock"><i class="ico rock"></i><span>Rock</span><b>0</b></div>
+      <div class="res" data-res="food"><i class="ico food"></i><span>Food</span><b>0</b></div>
+      <div class="res" data-res="energy"><i class="ico energy"></i><span>Energy</span><b>0</b></div>
+      <div class="res" data-res="compute"><i class="ico compute"></i><span>Compute</span><b>0</b></div>
+    </div>
 
-    <!-- Mira (nave e primeira pessoa) -->
+    <div id="mode-badge">FLIGHT</div>
+    <div id="alert" class="hidden"></div>
+    <div id="select-box" class="hidden"></div>
+    <div id="hurt"></div>
+
+    <div id="ai-panel" class="panel">
+      <div class="panel-title">BASE AI CORE</div>
+      <div class="ai-tier"><span id="ai-tier-num">TIER 0</span><span id="ai-tier-name">NARROW AI</span></div>
+      <div class="bar"><div id="ai-progress" class="fill ai"></div></div>
+      <div id="ai-next" class="small"></div>
+      <button id="ai-evolve" class="hidden">EVOLVE AI · U</button>
+    </div>
+
+    <!-- Tech Moon panel (Phase 5, key M) -->
+    <div id="moon-panel" class="panel hidden"></div>
+
+    <!-- Tier-up banner -->
+    <div id="tierup" class="hidden">
+      <div class="t1">BASE AI EVOLVED</div>
+      <div class="t2" id="tierup-name"></div>
+      <div class="t3" id="tierup-desc"></div>
+    </div>
+
+    <div id="flight-panel" class="panel">
+      <div class="row"><span>SPEED</span><b id="hud-speed">0</b><small>m/s</small></div>
+      <div class="bar"><div id="hud-speed-bar" class="fill speed"></div></div>
+      <div class="row"><span>FUEL</span><b id="hud-fuel">100</b><small>%</small></div>
+      <div class="bar"><div id="hud-fuel-bar" class="fill fuel"></div></div>
+      <div class="row"><span>SUIT</span></div>
+      <div class="bar"><div id="hud-suit-bar" class="fill suit"></div></div>
+      <div class="row loc"><span>LOCATION</span></div>
+      <div id="hud-planet" class="planet-name">Deep Space</div>
+      <div id="hud-planet-info" class="small"></div>
+    </div>
+
     <div id="crosshair"></div>
+    <div id="prompt" class="hidden">
+      <div id="prompt-text"></div>
+      <div class="bar"><div id="prompt-progress" class="fill harvest"></div></div>
+    </div>
+    <div id="notifications"></div>
+    <div id="hints"></div>
+    <div id="markers"></div>
+    <div id="ship-marker" class="hidden"><span class="arrow">▼</span><span class="label"></span></div>
+    <div id="floaters"></div>
 
-    <!-- Canto superior esquerdo: local atual -->
-    <div class="panel" id="place-box">
-      <div id="mode-label">NAVE</div>
-      <div id="planet-name">Espaço profundo</div>
-      <div id="planet-sub">—</div>
+    <!-- Build mode (Phase 2) -->
+    <div id="build-ui" class="hidden">
+      <div id="build-menu"></div>
+      <div id="build-info" class="panel"></div>
+      <div id="build-tip" class="hidden"></div>
     </div>
 
-    <!-- Canto superior direito: recursos -->
-    <div class="panel" id="res-box">
-      <div class="res-row"><span class="gem crystal"></span><span class="res-name">Cristal Eco</span><span class="res-count" id="cnt-crystal">0</span></div>
-      <div class="res-row"><span class="gem core"></span><span class="res-name">Núcleo Solar</span><span class="res-count" id="cnt-core">0</span></div>
-      <div class="res-row"><span class="gem essence"></span><span class="res-name">Essência Lunar</span><span class="res-count" id="cnt-essence">0</span></div>
-      <div id="local-res"></div>
-      <div id="explored"></div>
+    <div id="help" class="panel hidden">
+      <div class="panel-title">CONTROLS</div>
+      <h4>Ship</h4>
+      <ul>
+        <li><kbd>W</kbd>/<kbd>S</kbd> throttle up / brake</li>
+        <li><kbd>Mouse</kbd> or <kbd>A</kbd>/<kbd>D</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd> steer</li>
+        <li><kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>Space</kbd>/<kbd>C</kbd> rise / sink</li>
+        <li><kbd>Shift</kbd> boost (burns fuel) · <kbd>L</kbd> land / take off</li>
+      </ul>
+      <h4>On foot</h4>
+      <ul>
+        <li><kbd>WASD</kbd> move · <kbd>Shift</kbd> run · <kbd>Space</kbd> jump</li>
+        <li><kbd>Mouse</kbd> look · hold <kbd>E</kbd> harvest / capture</li>
+        <li>hold <kbd>X</kbd> next to a building to dismantle it (refunds part of its cost)</li>
+        <li><kbd>F</kbd> exit / board ship · <kbd>B</kbd> build mode</li>
+        <li><kbd>G</kbd> ship locator: walk automatically to your ship (G or WASD to stop)</li>
+      </ul>
+      <h4>Build mode</h4>
+      <ul>
+        <li><kbd>1</kbd>–<kbd>9</kbd> choose building · <kbd>R</kbd> rotate · click to place</li>
+        <li>Click a building to select · right-click / <kbd>Esc</kbd> cancel</li>
+        <li><kbd>WASD</kbd> pan · <kbd>Q</kbd>/<kbd>E</kbd> or right-drag rotate · wheel zoom · <kbd>B</kbd> exit</li>
+      </ul>
+      <h4>Units (in build mode)</h4>
+      <ul>
+        <li>Click a unit or drag a box to select · <kbd>Shift</kbd> adds</li>
+        <li>Right-click: ground = move · resource = gather · unfinished / damaged building = build / repair · enemy = attack</li>
+        <li>Train units by selecting a Barracks, Robotics Factory or Hangar</li>
+      </ul>
+      <h4>General</h4>
+      <ul>
+        <li><kbd>H</kbd> toggle help · <kbd>Esc</kbd> pause · <kbd>U</kbd> evolve the base AI when ready</li>
+        <li><kbd>M</kbd> Tech Moon panel (after the ASI tier): build, travel, automation</li>
+        <li><kbd>N</kbd> summon the Tech Moon to the planet you are on / near</li>
+        <li><kbd>K</kbd> mute / unmute sound · volumes in the pause menu (<kbd>Esc</kbd>)</li>
+        <li>No pointer lock? Hold a mouse button and drag to look.</li>
+      </ul>
     </div>
-
-    <!-- Canto inferior esquerdo: painel da nave -->
-    <div class="panel" id="flight-box">
-      <div class="stat">
-        <span class="stat-label">VELOCIDADE</span>
-        <span class="stat-val"><b id="speed-val">0</b> m/s</span>
-      </div>
-      <div class="bar"><div id="throttle-bar" class="fill"></div></div>
-      <div class="stat">
-        <span class="stat-label">COMBUSTÍVEL</span>
-        <span class="stat-val"><b id="fuel-val">100</b>%</span>
-      </div>
-      <div class="bar"><div id="fuel-bar" class="fill fuel"></div></div>
-    </div>
-
-    <!-- Canto inferior direito: pulso de eco (a pé) -->
-    <div class="panel" id="echo-box">
-      <div class="stat"><span class="stat-label">PULSO DE ECO</span><span class="stat-val"><kbd>R</kbd></span></div>
-      <div class="bar"><div id="echo-bar" class="fill echo"></div></div>
-    </div>
-
-    <!-- Mensagem de contexto, no centro embaixo -->
-    <div id="prompt"></div>
-
-    <!-- Avisos temporários -->
-    <div id="toasts"></div>
-
-    <div id="fps"></div>
   </div>
 
-  <!-- Painel de ajuda (tecla H) -->
-  <div id="help">
-    <h3>Controles <small>(H fecha)</small></h3>
-    <h4>Na nave</h4>
-    <ul>
-      <li><kbd>W</kbd> / <kbd>S</kbd> acelerar / frear e dar ré</li>
-      <li><kbd>Shift</kbd> turbo &nbsp; <kbd>X</kbd> parar</li>
-      <li><kbd>Mouse</kbd> ou <kbd>↑</kbd><kbd>↓</kbd> inclinar &nbsp; <kbd>A</kbd><kbd>D</kbd> virar</li>
-      <li><kbd>Q</kbd> / <kbd>E</kbd> girar (rolar)</li>
-      <li><kbd>L</kbd> pousar (perto de um planeta)</li>
-      <li><kbd>Espaço</kbd> decolar &nbsp; <kbd>F</kbd> sair da nave</li>
-    </ul>
-    <h4>A pé</h4>
-    <ul>
-      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar &nbsp; <kbd>Shift</kbd> correr</li>
-      <li><kbd>Espaço</kbd> pular &nbsp; <kbd>Mouse</kbd> olhar</li>
-      <li><kbd>R</kbd> pulso de eco (revela cristais)</li>
-      <li><kbd>V</kbd> 1ª / 3ª pessoa &nbsp; <kbd>Roda</kbd> zoom</li>
-      <li><kbd>F</kbd> entrar na nave (perto dela)</li>
-    </ul>
-    <h4>Geral</h4>
-    <ul><li><kbd>M</kbd> som &nbsp; <kbd>H</kbd> ajuda &nbsp; <kbd>Esc</kbd> pausa</li></ul>
-  </div>
-
-  <!-- Tela inicial / pausa -->
+  <!-- ============================ MENU ============================ -->
   <div id="overlay">
-    <div class="card">
-      <div class="logo">ECHO <span>STAR</span></div>
-      <div class="tagline">Explore mini-planetas. Colecione ecos de luz.</div>
-      <div id="overlay-title">Pronto para decolar?</div>
-      <button id="overlay-btn" type="button">Clique para iniciar</button>
-      <div class="keys">
-        <div><kbd>W</kbd><kbd>S</kbd> acelerar &nbsp; <kbd>Mouse</kbd> direção &nbsp; <kbd>Shift</kbd> turbo</div>
-        <div><kbd>L</kbd> pousar &nbsp; <kbd>F</kbd> sair/entrar na nave &nbsp; <kbd>R</kbd> pulso de eco</div>
-        <div><kbd>H</kbd> ajuda completa &nbsp; <kbd>M</kbd> som &nbsp; <kbd>Esc</kbd> pausa</div>
+    <div class="menu">
+      <div class="logo-star"></div>
+      <h1>ECHO STAR</h1>
+      <p class="tagline">Explore strange worlds. Build a colony. Evolve its mind.</p>
+      <div class="buttons">
+        <button id="btn-play">Launch</button>
+        <button id="btn-new" class="secondary">New Game</button>
       </div>
-      <div id="overlay-seed"></div>
+      <div class="audio-settings">
+        <label><span>Master</span><input type="range" id="vol-master" min="0" max="100" /></label>
+        <label><span>Music</span><input type="range" id="vol-music" min="0" max="100" /></label>
+        <label><span>Effects</span><input type="range" id="vol-sfx" min="0" max="100" /></label>
+        <div id="mute-state" class="mute-state"></div>
+      </div>
+      <div class="menu-controls">
+        <div><b>Ship</b> W/S throttle · Mouse steer · Q/E roll · Shift boost · L land</div>
+        <div><b>On foot</b> WASD · Space jump · hold E harvest · hold X dismantle · F exit/board · B build</div>
+        <div><b>Build</b> 1–9 choose · R rotate · click place · WASD/Q/E/wheel camera</div>
+        <div><b>Anytime</b> H help · Esc pause · K mute sound · progress autosaves</div>
+      </div>
+      <p class="phase">Phase 5 · The Tech Moon</p>
     </div>
   </div>
 
-  <noscript><p style="color:#fff;padding:2rem">O Echo Star precisa de JavaScript para funcionar.</p></noscript>
+  <!-- Singularity choice (Phase 4) -->
+  <div id="choice" class="hidden">
+    <div class="choice-panel">
+      <div class="choice-star"></div>
+      <h2>SINGULARITY</h2>
+      <p>Your base AI has outgrown its makers. Choose the path it will follow — this choice is permanent.</p>
+      <div id="choice-cards"></div>
+    </div>
+  </div>
 
-  <!-- Three.js (cópia local, funciona sem internet) e código do jogo -->
-  <script src="vendor/three.min.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/input.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/fx.js"></script>
-  <script src="js/space.js"></script>
-  <script src="js/planet.js"></script>
-  <script src="js/ship.js"></script>
-  <script src="js/player.js"></script>
-  <script src="js/camera.js"></script>
-  <script src="js/hud.js"></script>
-  <script src="js/main.js"></script>
+  <div id="loading">Generating star system…</div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

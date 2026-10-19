@@ -1,0 +1,31 @@
+/* ECHO STAR — local fonts (copies in vendor/fonts, SIL OFL 1.1 licence).
+   They used to come from Google Fonts; local copies keep the game working offline.
+   Only the "latin" subset (includes accented letters). */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 500 900;   /* variable font: one file covers every weight */
+  font-display: swap;
+  src: url(../vendor/fonts/orbitron.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(../vendor/fonts/rajdhani-500.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(../vendor/fonts/rajdhani-600.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(../vendor/fonts/rajdhani-700.woff2) format('woff2');
+}

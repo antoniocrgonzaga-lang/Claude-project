@@ -1,0 +1,4 @@
+# Text files use LF line endings; .bat files use CRLF (Windows standard).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.woff2 binary
