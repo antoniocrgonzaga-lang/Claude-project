@@ -16,7 +16,7 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 
 - Cada projeto vive em `projects/<nome-em-kebab-case>/` com um `README.md` próprio contendo: o que é, como abrir/jogar, controles/uso, estrutura de arquivos e ideias para expandir.
 - Ao **criar, renomear ou remover** um projeto, atualize a tabela de projetos no `README.md` da raiz.
-- Não deixe arquivos soltos na raiz além de `README.md`, `CLAUDE.md` e `.gitignore`.
+- Não deixe arquivos soltos na raiz além de `README.md`, `CLAUDE.md`, `.gitignore` e `.nojekyll` (GitHub Pages).
 - Coisas temporárias (rascunhos de teste, capturas de tela) **não** vão para o repositório.
 
 ## Projetos web / jogos
@@ -37,6 +37,7 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 - Testes (rodar antes de commitar mudanças no jogo; precisam do Playwright):
   - `node tools/smoke-test.js` — joga uma partida curta no `dist/` (voar, pousar, andar, coletar, construir, decolar, salvar).
   - `node tools/smoke-test.js --dev` — o mesmo no `index.html`, por um servidor local.
+- Link público (GitHub Pages, branch `main`): https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/
 - O jogo fica exposto em `window.game` (útil para testes e depuração no console).
 
 ## Git

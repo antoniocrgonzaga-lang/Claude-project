@@ -9,9 +9,13 @@ Everything (models, textures, sound and music) is generated in code: there are n
 
 ## How to play
 
-There are three ways, from simplest to most "dev":
+### ▶ Play online: **<https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/>**
 
-1. **Single file (recommended):** download [`dist/echo-star.html`](dist/echo-star.html) and double-click it.
+No download, no installation — just open the link in Chrome, Edge or Firefox on a computer.
+
+Other ways to run it:
+
+1. **Single file (offline):** download [`dist/echo-star.html`](dist/echo-star.html) and double-click it.
    It is the whole game in one file — no server, no installation, works offline.
 2. **Local server (for development):** double-click **`start.bat`** (Windows, needs Python), or run
    ```bash
@@ -20,7 +24,8 @@ There are three ways, from simplest to most "dev":
    and open <http://localhost:8080>. `index.html` uses ES modules, which browsers only load from a server —
    opening `index.html` directly won't work. The server disables caching, so a normal reload always picks up
    your latest changes.
-3. **Online link:** enable GitHub Pages for the repository (see the root README).
+3. **Online:** the link above is served by GitHub Pages from the `main` branch, so it updates automatically
+   a minute or two after changes reach `main`.
 
 Runs in desktop browsers with WebGL (Chrome, Edge, Firefox). There are no touch controls.
 
