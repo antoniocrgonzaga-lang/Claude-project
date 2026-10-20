@@ -37,6 +37,9 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 - Testes (rodar antes de commitar mudanças no jogo; precisam do Playwright):
   - `node tools/smoke-test.js` — joga uma partida curta no `dist/` (voar, pousar, andar, coletar, construir, decolar, salvar).
   - `node tools/smoke-test.js --dev` — o mesmo no `index.html`, por um servidor local.
+  - `node tools/touch-test.js` — joga com os dedos num tablet e num celular emulados.
+- Controles de toque (`js/touch.js`): no tablet aparecem **sempre**, mesmo com teclado conectado
+  (o teclado do dono não tem trackpad). No PC sem tela de toque nunca aparecem. Não quebrar essa regra.
 - Link público (GitHub Pages, branch `main`): https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/
 - O jogo fica exposto em `window.game` (útil para testes e depuração no console).
 

@@ -581,4 +581,35 @@ export const CONFIG = {
   hud: {
     notificationSeconds: 4.5,
   },
+
+  // ----------------------------------------------------------------- touch
+  // On-screen controls for phones and tablets (js/touch.js). In "Auto" mode they
+  // are ALWAYS shown on phones / tablets — even with a keyboard attached, since many
+  // tablet keyboards have no trackpad — and on touch-screen laptops after the first
+  // touch. Desktop PCs without a touch screen never see them.
+  touch: {
+    storageKey: 'echo-star-touch',  // where the Auto / On / Off choice is remembered
+    joystickRadius: 60,       // px the stick knob can travel from its centre
+    joystickDeadZone: 0.2,    // fraction of the radius ignored around the centre
+    walkThreshold: 0.35,      // walking: stick component needed to press a direction
+    runThreshold: 0.9,        // walking: stick pushed this far = run
+    lookSensitivity: 1.5,     // drag-to-look, relative to the mouse
+    flightSteer: 1.1,         // full stick = this × the keyboard turn rate
+    invertFlightY: false,     // true: push the stick up to dive (airplane style)
+    tapMaxMove: 12,           // px: a touch that moves less than this is a tap (however long it lasts)
+    buildPanSpeed: 1.4,       // build mode: drag distance → camera pan
+    // Lighter graphics on phones / tablets (gameplay, saves and resources are unchanged).
+    lite: {
+      enabled: true,
+      maxPixelRatio: 1.25,    // phones often have 3× screens: rendering every pixel is very slow
+      bloom: false,           // the glow post-effect is the most expensive pass
+      shadowMapSize: 1024,
+      skyboxResolution: 512,
+      starCount: 3500,
+      bandStarCount: 2000,
+      dustCount: 250,
+      weatherParticles: 350,
+      scatterPerPlanet: 2600, // grass / flowers (own seed: trees and resources don't move)
+    },
+  },
 };

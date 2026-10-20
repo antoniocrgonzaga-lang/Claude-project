@@ -27,7 +27,8 @@ Other ways to run it:
 3. **Online:** the link above is served by GitHub Pages from the `main` branch, so it updates automatically
    a minute or two after changes reach `main`.
 
-Runs in desktop browsers with WebGL (Chrome, Edge, Firefox). There are no touch controls.
+Runs in browsers with WebGL (Chrome, Edge, Firefox, Safari) on computers, **tablets and phones** —
+see [Touch controls](#touch-controls-phones--tablets) below.
 
 > **Saves** live in the browser's `localStorage`, tied to the page's address: progress made in
 > `dist/echo-star.html` and progress made at `http://localhost:8080` are kept separately.
@@ -43,6 +44,28 @@ Click the game to capture the mouse. If pointer lock is unavailable, hold a mous
 | Build mode | `1`–`9`, `0` choose building · `R` rotate · left-click place / select · right-click or `Esc` cancel · `WASD` pan · `Q`/`E` or right-drag rotate view · wheel zoom · `Tab` next colony · `B` exit |
 | Units (build mode) | click or drag a box to select (`Shift` adds) · right-click: ground = move · resource = gather · unfinished / damaged building = build / repair · enemy = attack |
 | General | `H` help · `Esc` pause (saves) · `U` evolve the base AI · `M` Tech Moon panel · `N` summon the Tech Moon · `K` mute sound · autosave every 30 s |
+
+## Touch controls (phones & tablets)
+
+On a phone or tablet the game shows an on-screen joystick and buttons. **On a tablet they are always shown,
+even with a keyboard attached** — many tablet keyboards have no trackpad, so the screen is the only way to look
+around and click. The keyboard keeps working at the same time (W/A/S/D, E, F, B…).
+Desktop PCs without a touch screen never see any of this.
+
+| Where | What it does |
+|---|---|
+| Left side | **Joystick** (appears under your thumb): steer the ship · walk (push all the way to run) |
+| Right side | **Drag** to look around / steer the ship / orbit the camera when landed |
+| Round buttons (bottom right) | The actions for what you are doing now: Thrust · Brake · Boost · Up · Down · **Land** — Step out · Take off · Build — Jump · Harvest (hold) · **Board** · To ship · Dismantle (hold) · Build |
+| Build mode | **Tap** to select · pick a building in the menu, **tap the ground** to move its hologram, then **Place** · Rotate · Cancel · **drag** to pan · **pinch** to zoom · **twist** two fingers to rotate · with units selected, **tap** the ground / a resource / an enemy to give an order · **Box select** to drag a box around several units |
+| Small buttons (right) | Pause · Help · Moon · Summon · Full screen |
+
+- **Pause menu → Touch controls: Auto / On / Off.** *Auto* (default): always on phones and tablets; on
+  touch-screen laptops they appear after the first touch and hide when the mouse moves. *On* / *Off* force it.
+- **Lighter graphics** on phones and tablets (lower resolution, no glow post-effect, smaller shadows, fewer
+  stars and particles). Gameplay, resources and saves are exactly the same. Tuning: `CONFIG.touch.lite`.
+- Hold the device in **landscape**. Use the Full screen button (where the browser allows it) to hide the address bar.
+- All touch tuning (joystick size, sensitivity, invert flight, tap distance…) is in `CONFIG.touch` in `js/config.js`.
 
 ## Phases
 
@@ -215,6 +238,7 @@ echo-star/
 ├── index.html            ← game page (HUD and menus in HTML) — loads js/main.js as an ES module
 ├── css/
 │   ├── style.css         ← HUD & menu styling (colours and fonts in the :root variables)
+│   ├── touch.css         ← on-screen controls + HUD layout while touch is on
 │   └── fonts.css         ← @font-face rules for the local fonts in vendor/fonts
 ├── js/                   ← game code (see the code map below)
 ├── vendor/
@@ -223,7 +247,8 @@ echo-star/
 ├── dist/echo-star.html   ← the whole game in a single file (generated — do not edit by hand)
 ├── tools/
 │   ├── build.js          ← builds dist/echo-star.html
-│   └── smoke-test.js     ← plays a short session in a real browser
+│   ├── smoke-test.js     ← plays a short session in a real browser (keyboard + mouse)
+│   └── touch-test.js     ← plays with fingers on an emulated tablet and phone
 ├── serve.py              ← local no-cache server (python serve.py 8080)
 └── start.bat             ← Windows: starts serve.py and opens the browser
 ```
@@ -255,6 +280,7 @@ echo-star/
 | `camera.js` | Smooth camera blends between modes |
 | `audio.js` | All sound, synthesised with the Web Audio API (no files): effects, engine / wind loops, generative music |
 | `hud.js` | DOM HUD: resources, AI tier, flight panel, prompts, notifications, planet markers |
+| `touch.js` | Touch controls: device detection, joystick, context buttons, build-mode gestures (tap / drag / pinch / twist), Auto / On / Off setting, lighter graphics on phones & tablets. Feeds the normal `Input`, so the rest of the game doesn't know about touch |
 | `inventory.js` / `save.js` / `input.js` / `geometry.js` / `utils.js` | Helpers |
 
 ## Development
@@ -265,12 +291,18 @@ After changing anything in `js/`, `css/`, `vendor/` or `index.html`:
 node tools/build.js          # rebuilds dist/echo-star.html (Node.js only, nothing to install)
 node tools/smoke-test.js     # plays a short session on dist/echo-star.html in a real browser
 node tools/smoke-test.js --dev   # same test on index.html through a local server
+node tools/touch-test.js     # plays with fingers on an emulated tablet (with keyboard) and phone
 ```
 
 The smoke test needs [Playwright](https://playwright.dev/) (`npm install playwright`). It flies, lands, steps
 outside, walks, harvests a resource, enters and leaves build mode, boards, takes off and saves — and fails if any
 step doesn't happen, if the browser console shows an error, or if the game tries to reach the internet.
 Set `SHOTS_DIR=some/folder` to save a screenshot of every step.
+
+The touch test sends real touch events (one and two fingers) to an emulated iPad and iPhone: it flies,
+lands, walks with the joystick, looks around, harvests, builds a Command Core with taps, pinches, pans,
+boards and takes off — and also checks that using the keyboard on the tablet keeps the touch controls,
+that the Off setting works, and that every button fits on a phone screen without overlapping.
 
 **How the single file works:** browsers don't load ES modules from `file://`, so `tools/build.js` embeds every
 module (game + Three.js), rewrites their imports to fixed names and adds a small loader that turns each one into
@@ -289,6 +321,7 @@ pointing at them — `tools/build.js` reads that same import map.
 | Change biome colours / palettes | `BIOMES` in `js/planet.js` |
 | Add or edit wildlife | `SPECIES` in `js/animals.js` |
 | Change HUD colours and fonts | `:root` variables in `css/style.css` |
+| Tune touch controls / phone graphics | `CONFIG.touch` in `js/config.js` · sizes in `:root` of `css/touch.css` |
 
 ## Credits
 

@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Echo Star</title>
   <link rel="stylesheet" href="css/fonts.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/touch.css" />
   <!-- Three.js r160 is copied in vendor/ (no CDN: works offline).
        This page uses ES modules, so it needs a local server (start.bat / serve.py).
        To open the game with a double-click, use dist/echo-star.html (built by tools/build.js). -->
@@ -114,6 +115,19 @@
         <li>Right-click: ground = move · resource = gather · unfinished / damaged building = build / repair · enemy = attack</li>
         <li>Train units by selecting a Barracks, Robotics Factory or Hangar</li>
       </ul>
+      <div class="touch-only">
+        <h4>Touch</h4>
+        <ul>
+          <li>Left side: drag the stick to fly / walk (push it all the way to run)</li>
+          <li>Right side: drag to look around (or steer the ship)</li>
+          <li>Round buttons: the actions for what you are doing right now</li>
+          <li>Build mode: tap to select · tap the ground to move a new building, then <b>Place</b> ·
+            drag to move the camera · pinch to zoom · twist two fingers to rotate</li>
+          <li>With units selected: tap the ground, a resource or an enemy to give an order ·
+            <b>Box select</b> lets you drag a box around several units</li>
+          <li>The keyboard keeps working at the same time</li>
+        </ul>
+      </div>
       <h4>General</h4>
       <ul>
         <li><kbd>H</kbd> toggle help · <kbd>Esc</kbd> pause · <kbd>U</kbd> evolve the base AI when ready</li>
@@ -146,6 +160,7 @@
         <div><b>On foot</b> WASD · Space jump · hold E harvest · hold X dismantle · F exit/board · B build</div>
         <div><b>Build</b> 1–9 choose · R rotate · click place · WASD/Q/E/wheel camera</div>
         <div><b>Anytime</b> H help · Esc pause · K mute sound · progress autosaves</div>
+        <div class="touch-only"><b>Touch</b> left stick moves · drag the right side to look · round buttons for actions</div>
       </div>
       <p class="phase">Phase 5 · The Tech Moon</p>
     </div>

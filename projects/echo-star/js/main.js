@@ -41,6 +41,7 @@ import { getNav } from './navigation.js';
 import { AudioSystem } from './audio.js';
 import { WeatherParticles, CLOUD_FADE, setCloudShadows } from './planetfx.js';
 import { saveGame, loadGame, clearSave } from './save.js';
+import { TouchControls, applyTouchProfile } from './touch.js';
 import { clamp, damp } from './utils.js';
 
 const MODE = { FLIGHT: 'flight', LANDING: 'landing', LANDED: 'landed', TAKEOFF: 'takeoff', WALKING: 'walking', BUILD: 'build' };
@@ -80,6 +81,8 @@ class Game {
     const save = loadGame();
     if (save) this.deserialize(save); else this.newGame();
     this._initMenu(!!save);
+    // On-screen joystick / buttons / gestures for phones and tablets (js/touch.js).
+    this.touch = new TouchControls(this);
 
     // Prime the camera so the first frame is already in place.
     this._cameraPose(0.016);
@@ -612,6 +615,7 @@ class Game {
   _loop() {
     requestAnimationFrame(() => this._loop());
     const dt = Math.min(this.clock.getDelta(), 0.05);
+    this.touch.update(dt);   // feeds touch input into this.input before the game reads it
     if (!this.paused && !this.choosing) this._update(dt);
     this.audio.update(dt, this.paused || this.choosing);
     if (window.innerWidth && window.innerHeight) this.composer.render();
@@ -1389,6 +1393,7 @@ class Game {
 // Boot once fonts/DOM are ready.
 window.addEventListener('DOMContentLoaded', () => {
   try {
+    applyTouchProfile();   // lighter graphics on phones / tablets (before the renderer exists)
     window.game = new Game();
   } catch (err) {
     console.error(err);

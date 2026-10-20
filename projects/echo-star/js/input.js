@@ -61,6 +61,8 @@ export class Input {
   }
 
   requestLock() {
+    // Touch controls on (js/touch.js): never lock — a locked pointer freezes finger positions.
+    if (this.lockDisabled) return;
     try {
       const p = this.canvas.requestPointerLock();
       if (p && p.catch) p.catch(() => {}); // pointer lock may be unavailable; drag-to-look still works
