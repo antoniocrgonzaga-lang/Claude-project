@@ -1,0 +1,120 @@
+/* ECHO STAR — touch controls (phones & tablets). See js/touch.js.
+   Everything here only applies while body has the "touch-on" class,
+   except the canvas rule (needed so the browser never scrolls / zooms the game). */
+:root {
+  --t-size: 66px;            /* action button diameter */
+  --t-gap: 10px;
+  --t-sys: 46px;             /* small system buttons (pause, help…) */
+  --t-stick: 130px;          /* joystick base diameter */
+  --safe-l: max(14px, env(safe-area-inset-left));
+  --safe-r: max(14px, env(safe-area-inset-right));
+  --safe-b: max(14px, env(safe-area-inset-bottom));
+}
+
+#game { touch-action: none; }
+
+#touch-ui {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+
+/* ---- joystick: rests in the bottom-left corner, jumps under the thumb when touched */
+.t-stick {
+  position: absolute; left: calc(var(--safe-l) + var(--t-stick) / 2 + 10px); top: calc(100% - var(--safe-b) - var(--t-stick) / 2 - 10px);
+  width: var(--t-stick); height: var(--t-stick); margin: calc(var(--t-stick) / -2) 0 0 calc(var(--t-stick) / -2);
+  border-radius: 50%; border: 2px solid rgba(120, 220, 255, 0.35);
+  background: radial-gradient(circle, rgba(77, 243, 255, 0.08), rgba(8, 12, 26, 0.35));
+  pointer-events: none; opacity: 0.55; transition: opacity 0.15s;
+}
+.t-stick.active { opacity: 1; }
+.t-knob {
+  position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(180, 250, 255, 0.95), rgba(77, 243, 255, 0.55));
+  box-shadow: 0 0 18px rgba(77, 243, 255, 0.6);
+}
+
+/* ---- action buttons: bottom-right, the first one of each mode in the corner */
+.t-pad {
+  position: absolute; right: var(--safe-r); bottom: var(--safe-b);
+  width: calc(3 * var(--t-size) + 2 * var(--t-gap));
+  display: flex; flex-direction: row-reverse; flex-wrap: wrap-reverse; gap: var(--t-gap);
+}
+.t-sys {
+  position: absolute; right: var(--safe-r); top: 136px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.t-btn {
+  pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;
+  width: var(--t-size); height: var(--t-size); padding: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: rgba(8, 14, 30, 0.62); color: var(--text); border: 1.5px solid rgba(120, 220, 255, 0.4);
+  box-shadow: none; transform: none; transition: background 0.08s, border-color 0.08s;
+  font-family: var(--font-title); cursor: pointer;
+}
+.t-btn:hover { transform: none; box-shadow: none; }
+.t-ico { font-size: 22px; line-height: 1; font-family: var(--font-ui); }
+.t-lbl { font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.t-btn.on { border-color: var(--cyan); box-shadow: 0 0 14px rgba(77, 243, 255, 0.45); }
+.t-btn.on .t-lbl { color: var(--cyan); }
+.t-btn.primary { border-color: rgba(141, 255, 106, 0.7); }
+.t-btn.primary .t-lbl { color: var(--green); }
+.t-btn.down { background: rgba(77, 243, 255, 0.35); border-color: #fff; }
+.t-sys .t-btn { width: var(--t-sys); height: var(--t-sys); }
+.t-sys .t-ico { font-size: 16px; }
+.t-sys .t-lbl { font-size: 7px; }
+
+/* ---- portrait hint */
+#t-rotate {
+  display: none; position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 30;
+  padding: 8px 14px; border-radius: 8px; background: rgba(8, 12, 26, 0.85); border: 1px solid var(--panel-border);
+  font-family: var(--font-ui); font-size: 14px; color: var(--text); pointer-events: none; white-space: nowrap;
+}
+@media (orientation: portrait) { body.touch-on #t-rotate { display: block; } }
+
+/* ---- pause menu: "Touch controls: Auto / On / Off" */
+.touch-setting {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+  font-family: var(--font-title); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+}
+.touch-setting button { padding: 6px 14px; font-size: 11px; background: transparent; color: var(--text); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: none; }
+.touch-setting button.active { color: #02121a; background: var(--cyan); border-color: var(--cyan); }
+
+.touch-only { display: none; }
+body.touch-on .touch-only { display: block; }
+
+/* ---- HUD layout while touch controls are on: keep the corners free for thumbs */
+body.touch-on #flight-panel { top: 58px; bottom: auto; transform: scale(0.85); transform-origin: top left; }
+body.touch-on #ai-panel { top: 12px; bottom: auto; right: var(--safe-r); }
+body.touch-on #notifications { right: calc(var(--safe-r) + var(--t-sys) + 14px); }
+body.touch-on #build-menu {
+  left: var(--safe-l); transform: none; justify-content: flex-start; bottom: var(--safe-b);
+  max-width: calc(100% - 3 * var(--t-size) - 2 * var(--t-gap) - var(--safe-l) - var(--safe-r) - 16px);
+}
+body.touch-on #prompt { bottom: calc(var(--safe-b) + 2 * var(--t-size) + 2 * var(--t-gap) + 10px); }
+body.touch-on #help { max-height: 84vh; overflow-y: auto; pointer-events: auto; }
+body.touch-on #moon-panel { max-height: calc(100% - 140px); }
+
+/* small screens (phones in landscape) */
+@media (max-height: 560px) {
+  :root { --t-size: 54px; --t-sys: 40px; --t-stick: 112px; --t-gap: 8px; }
+  body.touch-on #flight-panel { top: 50px; transform: scale(0.68); }
+  body.touch-on #ai-panel { transform: scale(0.72); transform-origin: top right; }
+  body.touch-on #resource-bar { transform: scale(0.85); transform-origin: top left; }
+  body.touch-on #hints { display: none; }
+  body.touch-on #mode-badge { top: 44px; }
+  body.touch-on .t-sys { top: 96px; gap: 6px; }
+  body.touch-on #notifications { top: 96px; width: 240px; }
+  /* build menu: one row of compact cards that scrolls sideways with a finger */
+  body.touch-on #build-menu { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior: contain; touch-action: pan-x; scrollbar-width: none; }
+  body.touch-on #build-menu::-webkit-scrollbar { display: none; }
+  body.touch-on .build-item { flex: none; width: 92px; padding: 5px 7px 6px; gap: 2px; }
+  body.touch-on .build-item .bname { font-size: 12px; }
+  body.touch-on .build-item .c { font-size: 11px; }
+  /* info panel: smaller, and never tall enough to reach the menu row */
+  body.touch-on #build-info {
+    top: 48px; transform: scale(0.72); transform-origin: top left;
+    max-height: calc((100vh - 48px - 92px - var(--safe-b)) / 0.72); overflow-y: auto;
+  }
+  body.touch-on #moon-panel { top: 60px; max-height: calc(100% - 80px); }
+}

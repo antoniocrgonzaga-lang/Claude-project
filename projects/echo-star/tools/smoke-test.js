@@ -93,9 +93,12 @@ function serve() {
     await page.goto(url);
     const loaded = await until(() => !!window.game && document.getElementById('loading').classList.contains('hidden'), 'loading', 1800);
     if (!check(loaded, 'game loaded (star system generated)')) throw new Error('did not load');
+    check(await g(() => !document.querySelector('.touch-setting')), 'desktop: pause menu unchanged (no touch option)');
     await page.click('#btn-play');
     await waitGame(0.3);
     check(await g(() => !game.paused && game.mode === 'flight'), 'game started in flight mode');
+    check(await g(() => !document.body.classList.contains('touch-on') && !!game.bloom
+      && getComputedStyle(document.getElementById('touch-ui')).display === 'none'), 'desktop: no touch controls, full graphics');
     await shot('1-flight');
 
     // Bring the ship close to the home planet's surface and land with L.
