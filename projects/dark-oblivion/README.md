@@ -1,8 +1,18 @@
 # Dark Oblivion
 
 RPG de ação isométrico (estilo Darkstone / Diablo) em Three.js, rodando direto no navegador, sem etapa de build.
+Três classes (Cavaleiro, Bruxa Sombria, Elfo Arqueiro), vilarejo com loja, 25 andares gerados por sorteio,
+chefes a cada 5 andares, itens com raridade, habilidades que evoluem, sons e música sintetizados por código.
 
-## Como rodar
+## Jogar agora
+
+- **No navegador (sem baixar nada):** <https://antoniocrgonzaga-lang.github.io/Claude-project/projects/dark-oblivion/>
+- **Arquivo único, com duplo clique:** baixe [`dist/dark-oblivion.html`](dist/dark-oblivion.html) (~30 MB, já com os modelos 3D) e abra no Chrome, Edge ou Firefox. Funciona offline.
+
+> Feito para PC com **mouse e teclado** (clique direito e teclas 1–6 são essenciais). Em celular/tablet ainda não há controles de toque.
+> Os saves ficam no navegador e **por endereço**: o que você salvar no link acima, no `localhost:8000` ou no arquivo único são três saves separados.
+
+## Como rodar (para mexer no código)
 
 **Jeito fácil:** dê dois cliques em **`start.bat`**. Ele sobe o servidor e abre o jogo no navegador.
 Para parar, feche a janela preta do servidor.
@@ -84,3 +94,60 @@ game.player.gainXp(500)
 game.world.goTo('dungeon', 5)
 game.world.goTo('dungeon', 25)   // chefe final
 ```
+
+## Estrutura de arquivos
+
+```
+dark-oblivion/
+├── index.html            ← página do jogo (precisa de servidor: start.bat ou server.py)
+├── start.bat / server.py ← servidor local sem cache (F5 mostra a mudança na hora)
+├── css/style.css         ← HUD, painéis e telas
+├── js/
+│   ├── main.js           ← ponto de entrada e loop principal
+│   ├── game.js           ← objeto compartilhado (game.player, game.world, game.scene...)
+│   ├── config.js         ← balanceamento (dificuldade, câmera, economia, áudio, número de andares)
+│   ├── save.js           ← saves no localStorage
+│   ├── core/             ← peças gerais: câmera, input, grid + A*, modelos (assets), texturas, áudio
+│   ├── data/             ← TABELAS do jogo: modelos, inimigos, itens, loja, temas, música
+│   ├── entities/         ← jogador, inimigos e atributos
+│   ├── classes/          ← as três classes
+│   ├── skills/           ← habilidades (dados, mecânicas, efeitos de status)
+│   ├── systems/          ← combate, loot, inventário, projéteis, efeitos, sons, música
+│   ├── ui/               ← HUD, painéis, tela inicial, tooltips
+│   └── world/            ← vilarejo, geração dos andares, decoração, paredes transparentes
+├── assets/models/        ← personagens do VRoid (.vrm) e o lobisomem do Blender (.glb)
+├── vendor/               ← Three.js 0.170.0 e a fonte Cinzel, copiados (sem CDN), com as licenças
+├── dist/dark-oblivion.html ← versão de arquivo único (gerada, não edite)
+└── tools/
+    ├── build.js          ← gera o dist/
+    ├── smoke-test.js     ← teste automático de uma partida curta
+    ├── optimize_vrm.py   ← deixa um .vrm leve para o jogo
+    └── blender_exportar_glb.py ← exporta um .blend como .glb
+```
+
+## Arquivo único e testes
+
+Depois de mexer em `js/`, `css/`, `vendor/`, `assets/` ou `index.html`, gere de novo o arquivo único
+(só precisa do Node.js):
+
+```bash
+node tools/build.js
+```
+
+Teste automático (precisa do Playwright: `npm install playwright`). Ele joga uma partida curta — cria um
+Cavaleiro, anda, entra no portal, mata um inimigo, abre o inventário, usa o pergaminho de portal, volta e
+confere o save — e falha se aparecer erro no console, se um modelo não carregar, se o jogo tentar acessar a
+internet ou se a memória de vídeo crescer a cada troca de andar:
+
+```bash
+node tools/smoke-test.js         # testa o dist/dark-oblivion.html
+node tools/smoke-test.js --dev   # testa o index.html por um servidor local
+```
+
+## Ideias para expandir
+
+- **Controles de toque** para tablet/celular (andar tocando, botões para as habilidades e poções), como no Echo Star.
+- Terminar a habilidade marcada como "em breve" (`implemented: false` em `js/skills/skillData.js`).
+- Modelos .glb para os inimigos comuns e para os chefes Vorthrax e Belzorath (hoje são peças simples montadas por código).
+- Opção de qualidade gráfica (sombras menores ou desligadas) para PCs mais fracos.
+- Exportar/importar o save num arquivo, para levar o personagem de um navegador para outro.

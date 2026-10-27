@@ -43,6 +43,16 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 - Link público (GitHub Pages, branch `main`): https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/
 - O jogo fica exposto em `window.game` (útil para testes e depuração no console).
 
+## Dark Oblivion (`projects/dark-oblivion/`)
+
+- Em português (segue a regra geral de idioma). Usa **módulos ES** como o Echo Star: `index.html` só abre por
+  servidor (`start.bat` / `python server.py 8000`); o arquivo único `dist/dark-oblivion.html` abre com duplo clique.
+- Three.js 0.170.0 e a fonte Cinzel ficam em `vendor/` (sem CDN). Balanceamento em `js/config.js`; tabelas em `js/data/`.
+- Depois de mexer em `js/`, `css/`, `vendor/`, `assets/` ou `index.html`, rode `node tools/build.js` e **commite o
+  `dist/dark-oblivion.html` atualizado** junto (é grande, ~30 MB, porque leva os modelos — não gere à toa).
+- Testes (precisam do Playwright): `node tools/smoke-test.js` (no `dist/`) e `node tools/smoke-test.js --dev`.
+- Link público: https://antoniocrgonzaga-lang.github.io/Claude-project/projects/dark-oblivion/ — o jogo fica em `window.game`.
+
 ## Git
 
 - Mensagens de commit curtas, em português, no imperativo (ex.: "Adiciona pulso de eco") — exceto no Echo Star (inglês, ex.: "Add echo pulse").
