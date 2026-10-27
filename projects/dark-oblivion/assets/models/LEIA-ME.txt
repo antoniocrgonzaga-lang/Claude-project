@@ -1,0 +1,11 @@
+Coloque aqui os seus modelos .glb exportados do Blender.
+
+Depois, em js/data/models.js, troque `glb: null` pelo caminho do arquivo.
+Exemplo: glb: 'assets/models/cavaleiro.glb'
+
+Dicas de exportação no Blender:
+- Origem do objeto no chão (nos pés do personagem).
+- Personagem olhando para a vista "Front" (-Y no Blender).
+- 1 unidade = 1 metro (um personagem tem ~1.8 m).
+- Nomes das animações (Actions): idle, walk (ou run), attack, death, roll, spin.
+- File > Export > glTF 2.0 (.glb), marque "Apply Modifiers" e inclua as animações.
