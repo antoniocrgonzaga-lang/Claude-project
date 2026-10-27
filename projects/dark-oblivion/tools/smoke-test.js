@@ -175,8 +175,13 @@ function serve() {
     await page.keyboard.press('KeyT');
     check(await until(() => !!game.world.area.interactables.find((i) => i.name === 'Portal para o Vilarejo'), 10000), 'pergaminho abriu um portal (T)');
     const back = await g(() => { const p = game.world.area.interactables.find((i) => i.name === 'Portal para o Vilarejo').position; return { x: p.x, y: 1.5, z: p.z }; });
-    await clickWhenVisible(back);
-    check(await until(() => game.world.kind === 'village' && !game.world.changing), 'voltou ao vilarejo pelo portal');
+    // Um clique às vezes não "pega" (o mouse chega antes do quadro que vê o portal): tenta de novo
+    let home = false;
+    for (let i = 0; i < 5 && !home; i++) {
+      if (await g(() => game.world.kind === 'dungeon' && !game.world.changing)) await clickWhenVisible(back);
+      home = await until(() => game.world.kind === 'village' && !game.world.changing, 20000);
+    }
+    check(home, 'voltou ao vilarejo pelo portal');
     check(await g(() => !!game.world.area.interactables.find((i) => i.name.startsWith('Portal de volta'))), 'portal de volta ao andar 1 está no vilarejo');
 
     // Salvo no navegador.
