@@ -123,6 +123,12 @@ export class WorldManager {
     game.vfx.clear();
     game.damageNumbers.clear();
     game.scene.remove(this.area.group);
+    // Libera o que o Three.js não solta sozinho: o mapa de sombras das luzes
+    // (o "sol" tem um de 2048×2048, ~16 MB) e os esqueletos dos NPCs.
+    this.area.group.traverse((o) => {
+      if (o.isLight) o.dispose();
+      o.skeleton?.dispose();
+    });
     this.area.dispose();
     this.area = null;
   }

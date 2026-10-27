@@ -603,6 +603,8 @@ export class ModelInstance {
     this.mixer?.stopAllAction();
     this.root.removeFromParent();
     // As geometrias/materiais são compartilhados (cache), então não os destruímos aqui.
+    // O esqueleto, não: cada cópia tem o seu, com uma textura de ossos na placa de vídeo.
+    this.root.traverse((o) => o.skeleton?.dispose());
   }
 }
 
