@@ -54,7 +54,10 @@ export async function preloadModels(onProgress) {
   onProgress?.(0, toLoad.length);
   await Promise.all(toLoad.map(async ([id, def]) => {
     try {
-      const gltf = await loader.loadAsync(def.glb);
+      // No arquivo único (dist/, gerado por tools/build.js) os modelos vêm embutidos no
+      // próprio HTML (tabela DARK_OBLIVION_FILES); no index.html, são lidos de assets/.
+      const url = globalThis.DARK_OBLIVION_FILES?.[def.glb] ?? def.glb;
+      const gltf = await loader.loadAsync(url);
       makeLit(gltf.scene);
       if (def.recolor) recolorModel(gltf.scene, def.recolor);
       if (def.materialOverrides) overrideMaterials(gltf.scene, def.materialOverrides);
