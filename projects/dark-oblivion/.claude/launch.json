@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dark-oblivion",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["server.py", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "dark-oblivion-test",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["server.py", "8001"],
+      "port": 8001
+    }
+  ]
+}

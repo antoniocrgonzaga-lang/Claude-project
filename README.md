@@ -9,6 +9,7 @@ Cada projeto mora na própria pasta dentro de [`projects/`](projects/), com um `
 | Projeto | O que é | Como abrir |
 | --- | --- | --- |
 | 🚀 [**Echo Star**](projects/echo-star/) | Jogo 3D no navegador — PC, tablet e celular (em inglês, para os clientes do Second Life): explore planetas procedurais, colete recursos, construa colônias, treine unidades, evolua a IA da base até a Lua Tecnológica e enfrente a Brood. Feito com Three.js. | [Jogar no navegador](https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/) · ou baixe [`dist/echo-star.html`](projects/echo-star/dist/echo-star.html) e abra com duplo clique |
+| 🗡️ [**Dark Oblivion**](projects/dark-oblivion/) | RPG de ação isométrico no navegador, estilo Diablo/Darkstone, para PC (mouse e teclado): escolha Cavaleiro, Bruxa ou Arqueiro, desça os 25 andares do Oblivion, colete itens e enfrente os chefes até Vorthrax. Feito com Three.js. | [Jogar no navegador](https://antoniocrgonzaga-lang.github.io/Claude-project/projects/dark-oblivion/) · ou baixe [`dist/dark-oblivion.html`](projects/dark-oblivion/dist/dark-oblivion.html) (~30 MB) e abra com duplo clique |
 
 ## Como o repositório é organizado
 
@@ -39,6 +40,7 @@ O repositório é publicado pelo **GitHub Pages** a partir da branch `main` (Set
 *Deploy from a branch* → `main` / `/ (root)`). Qualquer pessoa pode jogar sem baixar nada:
 
 - 🚀 **Echo Star:** <https://antoniocrgonzaga-lang.github.io/Claude-project/projects/echo-star/>
+- 🗡️ **Dark Oblivion:** <https://antoniocrgonzaga-lang.github.io/Claude-project/projects/dark-oblivion/>
 
 O site se atualiza sozinho 1–2 minutos depois de cada mudança chegar à `main`.
 O arquivo `.nojekyll` na raiz faz o GitHub servir os arquivos como estão (sem o processador Jekyll).

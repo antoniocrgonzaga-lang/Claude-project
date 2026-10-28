@@ -1,0 +1,6 @@
+# Texto com fim de linha LF; .bat com CRLF (padrão do Windows).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.woff2 binary
+*.vrm binary
+*.glb binary

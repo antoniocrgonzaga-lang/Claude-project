@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dark Oblivion</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!--
+    Import map: diz ao navegador onde encontrar "three" quando algum arquivo fizer
+    `import * as THREE from 'three'`. O Three.js 0.170.0 fica copiado em vendor/three
+    (sem CDN): o jogo funciona offline e uma atualização da biblioteca não o quebra.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- O canvas onde o Three.js desenha o mundo 3D -->
+  <canvas id="game"></canvas>
+
+  <!-- Camadas HTML que ficam POR CIMA do canvas -->
+  <div id="world-labels"></div>   <!-- nomes de itens no chão, portais, NPCs -->
+  <div id="damage-layer"></div>   <!-- números de dano flutuantes -->
+  <div id="hurt-flash"></div>     <!-- borda vermelha quando o jogador apanha -->
+
+  <!-- Interface do jogo (preenchida pelos módulos em js/ui/) -->
+  <div id="hud" class="hidden"></div>
+  <div id="panel-character" class="panel hidden"></div>
+  <div id="panel-shop" class="panel hidden"></div>
+  <div id="panel-inventory" class="panel hidden"></div>
+  <div id="panel-waypoint" class="panel hidden"></div>
+
+  <div id="tooltip" class="hidden"></div>
+  <div id="messages"></div>
+
+  <div id="death-screen" class="hidden">
+    <div class="death-title">Você morreu</div>
+    <div class="death-sub" id="death-sub"></div>
+  </div>
+
+  <div id="victory-screen" class="hidden">
+    <div class="victory-title">Vitória!</div>
+    <div class="victory-sub" id="victory-sub"></div>
+    <div class="victory-hint">Clique para continuar</div>
+  </div>
+
+  <div id="title-screen" class="hidden"></div>
+
+  <div id="loading">
+    <div class="loading-title">Dark Oblivion</div>
+    <div id="loading-text">Carregando...</div>
+  </div>
+
+  <!-- Tela preta usada nas transições entre áreas -->
+  <div id="fade"></div>
+
+  <!-- Ponto de entrada do jogo -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
