@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEON HYPERDRIVE 2</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD da corrida -->
+  <div id="hud" class="hidden">
+    <div class="hud-tl panel">
+      <div class="pos"><span id="hud-pos">1</span><small>/<span id="hud-total">8</span></small></div>
+      <div class="lap"><span data-i18n="hud.lap">VOLTA</span> <b><span id="hud-lap">1</span>/<span id="hud-laps">3</span></b></div>
+    </div>
+
+    <div class="hud-tr panel">
+      <div class="row"><label data-i18n="hud.time">TEMPO</label><span id="hud-time">0:00.000</span></div>
+      <div class="row"><label data-i18n="hud.lapTime">VOLTA</label><span id="hud-laptime">0:00.000</span></div>
+      <div class="row best"><label data-i18n="hud.best">MELHOR</label><span id="hud-best">--:--.---</span></div>
+    </div>
+
+    <ol id="hud-board"></ol>
+
+    <canvas id="hud-map" width="200" height="200"></canvas>
+
+    <div class="hud-br">
+      <div class="speed"><span id="hud-speed">0</span><small>KM/H</small></div>
+      <div class="bar energy">
+        <label data-i18n="hud.energy">ENERGIA</label>
+        <div class="rail"><div id="hud-energy" class="fill"></div></div>
+      </div>
+      <div class="bar boost">
+        <label>BOOST <i id="hud-boost-ind" data-i18n="hud.boostOn">ATIVO</i></label>
+        <div class="rail"><div id="hud-boost" class="fill"></div></div>
+      </div>
+    </div>
+
+    <div id="hud-msg"></div>
+    <div id="hud-count"></div>
+    <div id="hud-warn" class="hidden" data-i18n="hud.wrongWay">CONTRAMÃO</div>
+    <div id="hud-low"></div>
+  </div>
+
+  <!-- Telas -->
+  <div id="screens">
+    <section id="screen-title" class="screen">
+      <div class="logo">
+        <div class="logo-top">NEON</div>
+        <div class="logo-main">HYPERDRIVE<span class="logo-two">2</span></div>
+        <div class="logo-sub" data-i18n="title.sub">LIGA ANTIGRAVITACIONAL · 2187</div>
+      </div>
+      <div class="menu">
+        <button class="btn primary" data-action="play" data-i18n="menu.play">INICIAR CORRIDA</button>
+        <button class="btn" data-action="help" data-i18n="menu.help">INSTRUÇÕES</button>
+        <button class="btn" data-action="options" data-i18n="menu.options">OPÇÕES</button>
+      </div>
+      <div class="footnote" data-i18n="title.footnote">W A S D / SETAS · SHIFT BOOST · ESPAÇO DRIFT</div>
+    </section>
+
+    <section id="screen-ship" class="screen hidden">
+      <h2 data-i18n="ship.title">SELECIONE SUA NAVE</h2>
+      <div id="ship-cards" class="cards"></div>
+      <div class="menu row">
+        <button class="btn" data-action="back-title" data-i18n="btn.back">VOLTAR</button>
+        <button class="btn primary" data-action="to-track" data-i18n="btn.next">AVANÇAR</button>
+      </div>
+    </section>
+
+    <section id="screen-track" class="screen hidden">
+      <h2 data-i18n="track.title">SELECIONE A PISTA</h2>
+      <div id="track-cards" class="cards"></div>
+      <div class="menu row">
+        <button class="btn" data-action="back-ship" data-i18n="btn.back">VOLTAR</button>
+        <button class="btn primary" data-action="start" data-i18n="btn.start">LARGAR</button>
+      </div>
+    </section>
+
+    <section id="screen-help" class="screen hidden">
+      <h2 data-i18n="help.title">INSTRUÇÕES</h2>
+      <div class="help">
+        <table>
+          <tr><td><kbd>W</kbd> <kbd>↑</kbd></td><td data-i18n="help.accel">Acelerar</td></tr>
+          <tr><td><kbd>S</kbd> <kbd>↓</kbd></td><td data-i18n="help.brake">Frear</td></tr>
+          <tr><td><kbd>A</kbd> <kbd>D</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td data-i18n="help.steer">Virar</td></tr>
+          <tr><td><kbd>SHIFT</kbd></td><td data-i18n="help.boost">Boost (consome carga e energia)</td></tr>
+          <tr><td><kbd data-i18n="key.space">ESPAÇO</kbd></td><td data-i18n="help.drift">Drift / freio lateral</td></tr>
+          <tr><td><kbd>R</kbd></td><td data-i18n="help.reset">Reposicionar a nave na pista</td></tr>
+          <tr><td><kbd>C</kbd></td><td data-i18n="help.camera">Alternar câmera</td></tr>
+          <tr><td><kbd>P</kbd> <kbd>ESC</kbd></td><td data-i18n="help.pause">Pausar</td></tr>
+        </table>
+        <ul>
+          <li data-i18n-html="help.tip1"></li>
+          <li data-i18n-html="help.tip2"></li>
+          <li data-i18n-html="help.tip3"></li>
+          <li data-i18n-html="help.tip4"></li>
+          <li data-i18n-html="help.tip5"></li>
+          <li data-i18n-html="help.tip6"></li>
+        </ul>
+      </div>
+      <div class="menu row"><button class="btn primary" data-action="back" data-i18n="btn.back">VOLTAR</button></div>
+    </section>
+
+    <section id="screen-options" class="screen hidden">
+      <h2 data-i18n="options.title">OPÇÕES</h2>
+      <div class="options">
+        <div class="opt">
+          <label data-i18n="opt.language">IDIOMA</label>
+          <div class="seg" id="opt-language">
+            <button class="btn small" data-language="pt">PORTUGUÊS</button>
+            <button class="btn small" data-language="en">ENGLISH</button>
+            <button class="btn small" data-language="de">DEUTSCH</button>
+          </div>
+        </div>
+        <div class="opt">
+          <label data-i18n="opt.difficulty">DIFICULDADE</label>
+          <div class="seg" id="opt-difficulty">
+            <button class="btn small" data-difficulty="casual" data-i18n="diff.casual">CASUAL</button>
+            <button class="btn small" data-difficulty="hard" data-i18n="diff.hard">DIFÍCIL</button>
+          </div>
+        </div>
+        <div id="opt-difficulty-note" class="opt-note hidden" data-i18n="opt.difficultyNote"></div>
+        <div class="opt">
+          <label data-i18n="opt.quality">QUALIDADE GRÁFICA</label>
+          <div class="seg" id="opt-quality">
+            <button class="btn small" data-quality="low" data-i18n="quality.low">BAIXO</button>
+            <button class="btn small" data-quality="medium" data-i18n="quality.medium">MÉDIO</button>
+            <button class="btn small" data-quality="high" data-i18n="quality.high">ALTO</button>
+          </div>
+        </div>
+        <div class="opt"><label for="opt-crt" data-i18n="opt.crt">EFEITO CRT</label><input type="checkbox" id="opt-crt"></div>
+        <div class="opt"><label for="opt-shadows" data-i18n="opt.shadows">SOMBRAS</label><input type="checkbox" id="opt-shadows"></div>
+        <div class="opt"><label for="opt-master" data-i18n="opt.master">VOLUME GERAL</label><input type="range" id="opt-master" min="0" max="1" step="0.05"></div>
+        <div class="opt"><label for="opt-music" data-i18n="opt.music">VOLUME DA MÚSICA</label><input type="range" id="opt-music" min="0" max="1" step="0.05"></div>
+        <div class="opt"><label for="opt-engine" data-i18n="opt.engine">VOLUME DO MOTOR</label><input type="range" id="opt-engine" min="0" max="1" step="0.05"></div>
+        <div class="opt"><label for="opt-sfx" data-i18n="opt.sfx">VOLUME DOS EFEITOS</label><input type="range" id="opt-sfx" min="0" max="1" step="0.05"></div>
+      </div>
+      <div class="menu row"><button class="btn primary" data-action="back" data-i18n="btn.back">VOLTAR</button></div>
+    </section>
+
+    <section id="screen-pause" class="screen hidden">
+      <h2 data-i18n="pause.title">PAUSA</h2>
+      <div class="menu">
+        <button class="btn primary" data-action="resume" data-i18n="pause.resume">CONTINUAR</button>
+        <button class="btn" data-action="restart" data-i18n="pause.restart">REINICIAR CORRIDA</button>
+        <button class="btn" data-action="options" data-i18n="menu.options">OPÇÕES</button>
+        <button class="btn" data-action="quit" data-i18n="pause.quit">SAIR PARA O MENU</button>
+      </div>
+    </section>
+
+    <section id="screen-results" class="screen hidden">
+      <div class="results-head">
+        <h2 id="results-title">RESULTADO FINAL</h2>
+        <div id="results-sub" class="results-sub"></div>
+      </div>
+      <table id="results-table" class="results"></table>
+      <div class="menu row">
+        <button class="btn primary" data-action="restart" data-i18n="results.again">CORRER NOVAMENTE</button>
+        <button class="btn" data-action="quit" data-i18n="results.menu">MENU PRINCIPAL</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="error" class="hidden"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
