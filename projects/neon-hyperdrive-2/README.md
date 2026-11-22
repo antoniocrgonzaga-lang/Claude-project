@@ -33,6 +33,23 @@ Para parar, feche a janela preta do servidor.
 | Alternar câmera (próxima, distante, cockpit) | C | Y |
 | Pausar | P ou Esc | Start |
 
+## Jogar numa TV do Second Life (mídia no prim)
+
+O jogo funciona como mídia numa face de objeto, mas o teclado só chega à página se a TV estiver **com o foco**:
+
+1. **Feche a janela de edição (Build/Edit) e a janela *Media Settings*.** Com elas abertas, o clique vai para o editor e não para a página.
+2. Clique na tela da TV (de preferência num ponto vazio, fora dos botões). Ela fica focada enquanto você não clicar fora, mexer a câmera com Alt+clique ou apertar **Esc**.
+3. No Second Life o **Esc tira o foco da TV**: para pausar, use **P**.
+4. Desligue o AO e não esteja sentado em objetos com script, que podem "pegar" as teclas de movimento.
+5. Em *Preferências → Som e Mídia*, deixe "Media first-click interacts" em **Any object** se a TV não estiver num terreno seu.
+
+**Teste de teclado:** coloque `?keys=1` no fim do endereço da mídia
+(ex.: `.../neon-hyperdrive-2/?keys=1`). Aparece um painel mostrando se a página tem o foco e cada tecla recebida:
+se nada aparece ao apertar as teclas, o problema é de foco ou do visualizador; se aparece, o jogo já está recebendo.
+
+O jogo reconhece as teclas mesmo quando o navegador embutido do visualizador manda os dados incompletos
+(`event.code` vazio): ele tenta `code`, depois `key`, depois `keyCode` (ver `keyCodeOf` em `src/InputManager.js`).
+
 ## Regras da pista
 
 - **Faixas laranja:** boost grátis e recarga do capacitor.
@@ -74,6 +91,8 @@ neon-hyperdrive-2/
     ├── CollisionSystem.js ← batidas em barreiras e entre naves
     ├── CameraController.js, Effects.js ← câmeras, partículas, bloom e efeito CRT
     ├── HUD.js / Menu.js   ← interface da corrida e telas
+    ├── InputManager.js    ← teclado + gamepad (com reservas para navegadores embutidos)
+    ├── KeyProbe.js        ← painel de teste de teclado (?keys=1)
     ├── AudioManager.js    ← efeitos sonoros sintetizados
     └── MusicManager.js / Songs.js ← sequenciador e as 6 músicas (escritas como dados)
 ```

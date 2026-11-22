@@ -196,3 +196,10 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--cyan); }
   .speed span { font-size: 52px; }
   .hud-br { width: 210px; }
 }
+
+/* Teste de teclado (?keys=1) — ver src/KeyProbe.js */
+#key-probe { position: fixed; left: 12px; bottom: 12px; z-index: 60; max-width: min(640px, calc(100vw - 24px)); padding: 10px 14px; background: rgba(5, 3, 13, 0.88); border: 1px solid #ff3fd0; color: #e8e0ff; font: 13px/1.45 var(--font-mono); pointer-events: none; }
+#key-probe b { color: #ff3fd0; }
+#key-probe .kp-status.ok { color: #6dff9c; }
+#key-probe .kp-status.bad { color: #ff6d7d; font-weight: bold; }
+#key-probe .kp-log { margin: 6px 0 0; white-space: pre; font: inherit; color: #9fe8ff; }

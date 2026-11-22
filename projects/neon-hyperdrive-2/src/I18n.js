@@ -136,6 +136,13 @@ const STRINGS = {
     'error.outro': 'Recarregue a página (F5). Se persistir, abra o jogo pelo start.bat ou pelo link do GitHub Pages, num navegador atualizado.',
     'error.file': 'O jogo precisa ser aberto por um servidor local (módulos ES não funcionam via file://).',
     'error.webgl': 'Seu navegador ou placa de vídeo não oferece suporte a WebGL 2.',
+    'probe.title': 'TESTE DE TECLADO (?keys=1)',
+    'probe.hint': 'Aperte W A S D, setas, Shift, Espaço e P. Cada tecla que o jogo recebe aparece abaixo.',
+    'probe.focus': 'Página com foco',
+    'probe.held': 'Teclas seguradas (como o jogo entende)',
+    'probe.yes': 'SIM',
+    'probe.no': 'NÃO — clique na tela',
+    'probe.none': 'nenhuma',
   },
 
   en: {
@@ -258,6 +265,13 @@ const STRINGS = {
     'error.outro': 'Reload the page (F5). If it keeps happening, open the game with start.bat or through the GitHub Pages link, in an up-to-date browser.',
     'error.file': 'The game must be opened through a local server (ES modules do not work over file://).',
     'error.webgl': 'Your browser or graphics card does not support WebGL 2.',
+    'probe.title': 'KEYBOARD TEST (?keys=1)',
+    'probe.hint': 'Press W A S D, arrows, Shift, Space and P. Every key the game receives shows up below.',
+    'probe.focus': 'Page has focus',
+    'probe.held': 'Keys held (as the game reads them)',
+    'probe.yes': 'YES',
+    'probe.no': 'NO — click the screen',
+    'probe.none': 'none',
   },
 
   de: {
@@ -380,6 +394,13 @@ const STRINGS = {
     'error.outro': 'Lade die Seite neu (F5). Falls es weiterhin passiert, starte das Spiel über start.bat oder den GitHub-Pages-Link in einem aktuellen Browser.',
     'error.file': 'Das Spiel muss über einen lokalen Server geöffnet werden (ES-Module funktionieren nicht über file://).',
     'error.webgl': 'Dein Browser oder deine Grafikkarte unterstützt kein WebGL 2.',
+    'probe.title': 'TASTATURTEST (?keys=1)',
+    'probe.hint': 'Drücke W A S D, Pfeiltasten, Shift, Leertaste und P. Jede Taste, die das Spiel empfängt, erscheint unten.',
+    'probe.focus': 'Seite hat Fokus',
+    'probe.held': 'Gehaltene Tasten (wie das Spiel sie liest)',
+    'probe.yes': 'JA',
+    'probe.no': 'NEIN — klicke auf den Bildschirm',
+    'probe.none': 'keine',
   },
 };
 

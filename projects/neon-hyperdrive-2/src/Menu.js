@@ -1,6 +1,7 @@
 import { SHIPS, TRACKS, STAT_KEYS, saveSettings } from './Config.js';
 import { formatTime, hexCss } from './Utils.js';
 import { t, translateDom } from './I18n.js';
+import { keyCodeOf } from './InputManager.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,7 +32,7 @@ export class Menu {
     window.addEventListener('keydown', (e) => {
       if (!this.current) return;
       if (e.target instanceof HTMLInputElement) return;
-      const dir = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.code];
+      const dir = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[keyCodeOf(e)];
       if (!dir) return;
       const items = [...this.screens[this.current].querySelectorAll('button')];
       if (!items.length) return;

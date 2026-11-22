@@ -1,6 +1,7 @@
 import { Game } from './Game.js';
 import { loadSettings } from './Config.js';
 import { setLanguage, t } from './I18n.js';
+import { keyProbeRequested, startKeyProbe } from './KeyProbe.js';
 
 const errorBox = document.getElementById('error');
 
@@ -34,6 +35,10 @@ function boot() {
     game.bus.on('game:error', (err) => showError(err?.message || String(err)));
     game.start();
     window.__game = game; // útil para depuração no console
+    // Navegadores embutidos (ex.: TV do Second Life) nem sempre dão o foco do
+    // teclado à página sozinhos: todo clique pede o foco de novo, por garantia.
+    window.addEventListener('pointerdown', () => window.focus());
+    if (keyProbeRequested()) startKeyProbe(game.input);
   } catch (err) {
     console.error(err);
     showError(err?.message || String(err));
