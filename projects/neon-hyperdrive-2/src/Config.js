@@ -87,7 +87,7 @@ export const CONFIG = {
 // à página mas o teclado nem sempre chega). Ver src/PointerControls.js.
 // Ligam sozinhos no navegador do Second Life; ?mouse=1 força, ?mouse=0 desliga.
 export const POINTER = {
-  autoThrottle: true,   // acelera sozinho durante a corrida (S/↓ ainda freiam)
+  autoThrottle: false,  // true = acelera sozinho durante a corrida (para jogar só com o mouse)
   steerSpan: 0.32,      // fração da largura da tela, a partir do centro, para virar 100%
   deadZone: 0.06,       // zona morta no centro (fração de steerSpan) para andar reto
   boostBurst: 1.6,      // segundos de boost a cada clique no botão BOOST

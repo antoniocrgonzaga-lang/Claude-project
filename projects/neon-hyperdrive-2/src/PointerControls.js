@@ -3,7 +3,7 @@
 // visualizador repassa os cliques para a página, mas não as teclas.
 //
 // Como se joga:
-//   - a nave ACELERA SOZINHA;
+//   - acelera com W/↑ (ou sozinha, se POINTER.autoThrottle = true em Config.js);
 //   - SEGURE o botão do mouse em qualquer ponto da tela e ARRASTE para os lados
 //     para virar (quanto mais longe do centro, mais vira; soltou, segue reto);
 //   - botões na lateral direita: BOOST (rajada curta), CÂMERA, REPOSICIONAR e PAUSA.

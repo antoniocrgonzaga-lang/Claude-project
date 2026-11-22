@@ -44,10 +44,10 @@ O jogo funciona como mídia numa face de objeto, mas o teclado só chega à pág
 5. Em *Preferências → Som e Mídia*, deixe "Media first-click interacts" em **Any object** se a TV não estiver num terreno seu.
 
 **Controles pelo mouse:** no navegador do Second Life o jogo liga sozinho um modo para jogar só com o mouse
-(no navegador comum, use `?mouse=1` no endereço; `?mouse=0` desliga). A nave **acelera sozinha**; para virar,
-**segure o botão do mouse e arraste para os lados** (quanto mais longe do centro, mais vira). Na lateral direita
-ficam os botões **BOOST** (rajada curta), **CÂMERA**, **REPOSICIONAR** e **PAUSA**. Se o teclado funcionar,
-ele continua valendo junto (e o S/↓ freia). Ajustes em `POINTER` (`src/Config.js`).
+(no navegador comum, use `?mouse=1` no endereço; `?mouse=0` desliga). Acelere com **W/↑**; para virar, dá para
+**segurar o botão do mouse e arrastar para os lados** (quanto mais longe do centro, mais vira). Na lateral direita
+ficam os botões **BOOST** (rajada curta), **CÂMERA**, **REPOSICIONAR** e **PAUSA**. O teclado continua valendo junto.
+Ajustes em `POINTER` (`src/Config.js`); com `autoThrottle: true` a nave acelera sozinha e dá para jogar só com o mouse.
 
 **Teste de teclado:** coloque `?keys=1` no fim do endereço da mídia
 (ex.: `.../neon-hyperdrive-2/?keys=1`). Aparece um painel mostrando se a página tem o foco e cada tecla recebida:
