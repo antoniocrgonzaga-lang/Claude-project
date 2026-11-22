@@ -51,6 +51,8 @@ export class InputManager {
     this.state = { throttle: 0, brake: 0, steer: 0, boost: false, drift: false };
     this.enabled = true;
     this._padPrev = {};
+    // Controles pelo mouse (PointerControls.js escreve aqui; update() lê).
+    this.pointer = { enabled: false, held: false, steer: 0, boostUntil: 0, autoThrottle: false };
     this._attached = false;
 
     this._onDown = (e) => {
@@ -99,8 +101,18 @@ export class InputManager {
     s.steer = (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0) - (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0);
     s.boost = k.has('ShiftLeft') || k.has('ShiftRight');
     s.drift = k.has('Space');
+    this._applyPointer(s);
     this._pollGamepad(s);
     return s;
+  }
+
+  /** Mistura os controles do mouse: o teclado, quando chega, tem prioridade. */
+  _applyPointer(s) {
+    const p = this.pointer;
+    if (!p.enabled) return;
+    if (p.autoThrottle && !s.brake) s.throttle = 1;
+    if (p.held && s.steer === 0) s.steer = p.steer;
+    if (performance.now() < p.boostUntil) s.boost = true;
   }
 
   _pollGamepad(s) {

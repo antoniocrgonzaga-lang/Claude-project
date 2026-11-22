@@ -143,6 +143,11 @@ const STRINGS = {
     'probe.yes': 'SIM',
     'probe.no': 'NÃO — clique na tela',
     'probe.none': 'nenhuma',
+    'pc.boost': 'BOOST',
+    'pc.camera': 'CÂMERA',
+    'pc.reset': 'REPOSICIONAR',
+    'pc.pause': 'PAUSA',
+    'pc.hint': 'SEGURE O BOTÃO DO MOUSE E ARRASTE PARA OS LADOS PARA VIRAR',
   },
 
   en: {
@@ -272,6 +277,11 @@ const STRINGS = {
     'probe.yes': 'YES',
     'probe.no': 'NO — click the screen',
     'probe.none': 'none',
+    'pc.boost': 'BOOST',
+    'pc.camera': 'CAMERA',
+    'pc.reset': 'RESET',
+    'pc.pause': 'PAUSE',
+    'pc.hint': 'HOLD THE MOUSE BUTTON AND DRAG LEFT OR RIGHT TO STEER',
   },
 
   de: {
@@ -401,6 +411,11 @@ const STRINGS = {
     'probe.yes': 'JA',
     'probe.no': 'NEIN — klicke auf den Bildschirm',
     'probe.none': 'keine',
+    'pc.boost': 'BOOST',
+    'pc.camera': 'KAMERA',
+    'pc.reset': 'ZURÜCKSETZEN',
+    'pc.pause': 'PAUSE',
+    'pc.hint': 'MAUSTASTE HALTEN UND NACH LINKS ODER RECHTS ZIEHEN ZUM LENKEN',
   },
 };
 

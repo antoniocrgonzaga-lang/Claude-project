@@ -31,10 +31,11 @@ export function startKeyProbe(input) {
   };
   const show = (v) => (v === '' ? '""' : v === undefined ? '—' : JSON.stringify(v));
 
-  for (const type of ['keydown', 'keyup']) {
+  // keypress também: alguns navegadores embutidos mandam só o "caractere", sem keydown/keyup.
+  for (const type of ['keydown', 'keyup', 'keypress']) {
     // Fase de captura: registra a tecla mesmo que outra parte do jogo a bloqueie depois.
     window.addEventListener(type, (e) => {
-      push(`${type.padEnd(7)} key=${show(e.key)} code=${show(e.code)} keyCode=${e.keyCode}`
+      push(`${type.padEnd(8)} key=${show(e.key)} code=${show(e.code)} keyCode=${e.keyCode}`
         + `${e.repeat ? ' repeat' : ''} → ${keyCodeOf(e) || '(ignored)'}`);
     }, true);
   }

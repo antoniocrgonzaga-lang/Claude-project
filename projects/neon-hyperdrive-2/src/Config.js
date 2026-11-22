@@ -83,6 +83,16 @@ export const CONFIG = {
   },
 };
 
+// Controles pelo mouse (pensados para as TVs do Second Life, onde o clique chega
+// à página mas o teclado nem sempre chega). Ver src/PointerControls.js.
+// Ligam sozinhos no navegador do Second Life; ?mouse=1 força, ?mouse=0 desliga.
+export const POINTER = {
+  autoThrottle: true,   // acelera sozinho durante a corrida (S/↓ ainda freiam)
+  steerSpan: 0.32,      // fração da largura da tela, a partir do centro, para virar 100%
+  deadZone: 0.06,       // zona morta no centro (fração de steerSpan) para andar reto
+  boostBurst: 1.6,      // segundos de boost a cada clique no botão BOOST
+};
+
 export const QUALITY = {
   low:    { pixelRatio: 1,    bloom: false, msaa: 0, particles: 0.3, buildings: 0.4, speedLines: 40 },
   medium: { pixelRatio: 1.25, bloom: true,  msaa: 0, particles: 0.7, buildings: 0.8, speedLines: 80 },

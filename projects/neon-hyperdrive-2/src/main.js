@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { loadSettings } from './Config.js';
 import { setLanguage, t } from './I18n.js';
 import { keyProbeRequested, startKeyProbe } from './KeyProbe.js';
+import { PointerControls, pointerControlsWanted } from './PointerControls.js';
 
 const errorBox = document.getElementById('error');
 
@@ -39,6 +40,8 @@ function boot() {
     // teclado à página sozinhos: todo clique pede o foco de novo, por garantia.
     window.addEventListener('pointerdown', () => window.focus());
     if (keyProbeRequested()) startKeyProbe(game.input);
+    // Controles pelo mouse: sozinhos no navegador do Second Life, ou com ?mouse=1.
+    if (pointerControlsWanted()) new PointerControls(game.input, game.bus, document.getElementById('hud'));
   } catch (err) {
     console.error(err);
     showError(err?.message || String(err));

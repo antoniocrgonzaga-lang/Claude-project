@@ -203,3 +203,15 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--cyan); }
 #key-probe .kp-status.ok { color: #6dff9c; }
 #key-probe .kp-status.bad { color: #ff6d7d; font-weight: bold; }
 #key-probe .kp-log { margin: 6px 0 0; white-space: pre; font: inherit; color: #9fe8ff; }
+
+/* Controles pelo mouse (?mouse=1 / navegador do Second Life) — ver src/PointerControls.js */
+#pointer-controls .pc-buttons { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+#pointer-controls button { min-width: 118px; padding: 12px 14px; font: 700 13px var(--font-tech); letter-spacing: 0.12em; color: #fff; background: rgba(4, 4, 20, 0.6); border: 1px solid rgba(0, 229, 255, 0.6); cursor: pointer; user-select: none; }
+#pointer-controls button:active { background: rgba(0, 229, 255, 0.35); }
+#pointer-controls .pc-boost { padding: 20px 14px; border-color: var(--magenta); box-shadow: 0 0 12px rgba(255, 43, 214, 0.5); }
+#pointer-controls .pc-steer { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(340px, 28vw); text-align: center; }
+#pointer-controls .pc-rail { position: relative; height: 6px; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(0, 229, 255, 0.4); }
+#pointer-controls .pc-rail i { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #789; }
+#pointer-controls .pc-rail i.on { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+#pointer-controls small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 0.1em; color: #cfd6ff; text-shadow: 0 0 4px #000; }
+body.pointer-mode #game { touch-action: none; }

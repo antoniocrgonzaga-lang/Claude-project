@@ -10,7 +10,7 @@ O jogo tem 3 naves, 5 pistas temáticas, efeitos sonoros e trilha sonora sinteti
 - **No navegador (sem baixar nada):** <https://antoniocrgonzaga-lang.github.io/Claude-project/projects/neon-hyperdrive-2/>
 - **Arquivo único, com duplo clique:** baixe [`dist/neon-hyperdrive-2.html`](dist/neon-hyperdrive-2.html) (~1 MB) e abra no Chrome, Edge ou Firefox. Funciona offline.
 
-> Feito para PC com **teclado** (ou gamepad). Em celular/tablet ainda não há controles de toque.
+> Feito para PC com **teclado** (ou gamepad); numa TV do Second Life dá para jogar só com o **mouse** (ver abaixo). Em celular/tablet ainda não há controles de toque.
 > As opções (idioma, dificuldade, gráficos, volumes) ficam salvas no navegador **por endereço**: o link acima, o `localhost` e o arquivo único guardam opções separadas.
 
 ## Como rodar (para mexer no código)
@@ -42,6 +42,12 @@ O jogo funciona como mídia numa face de objeto, mas o teclado só chega à pág
 3. No Second Life o **Esc tira o foco da TV**: para pausar, use **P**.
 4. Desligue o AO e não esteja sentado em objetos com script, que podem "pegar" as teclas de movimento.
 5. Em *Preferências → Som e Mídia*, deixe "Media first-click interacts" em **Any object** se a TV não estiver num terreno seu.
+
+**Controles pelo mouse:** no navegador do Second Life o jogo liga sozinho um modo para jogar só com o mouse
+(no navegador comum, use `?mouse=1` no endereço; `?mouse=0` desliga). A nave **acelera sozinha**; para virar,
+**segure o botão do mouse e arraste para os lados** (quanto mais longe do centro, mais vira). Na lateral direita
+ficam os botões **BOOST** (rajada curta), **CÂMERA**, **REPOSICIONAR** e **PAUSA**. Se o teclado funcionar,
+ele continua valendo junto (e o S/↓ freia). Ajustes em `POINTER` (`src/Config.js`).
 
 **Teste de teclado:** coloque `?keys=1` no fim do endereço da mídia
 (ex.: `.../neon-hyperdrive-2/?keys=1`). Aparece um painel mostrando se a página tem o foco e cada tecla recebida:
@@ -93,6 +99,7 @@ neon-hyperdrive-2/
     ├── HUD.js / Menu.js   ← interface da corrida e telas
     ├── InputManager.js    ← teclado + gamepad (com reservas para navegadores embutidos)
     ├── KeyProbe.js        ← painel de teste de teclado (?keys=1)
+    ├── PointerControls.js ← controles pelo mouse (Second Life / ?mouse=1)
     ├── AudioManager.js    ← efeitos sonoros sintetizados
     └── MusicManager.js / Songs.js ← sequenciador e as 6 músicas (escritas como dados)
 ```
