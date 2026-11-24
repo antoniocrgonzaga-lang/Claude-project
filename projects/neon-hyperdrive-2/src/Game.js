@@ -100,6 +100,9 @@ export class Game {
     window.addEventListener('resize', () => this._resize());
     const unlock = () => { this.audio.unlock(); this.music.start(); };
     window.addEventListener('pointerdown', unlock);
+    // No celular o navegador só libera o áudio no fim do toque (pointerup/touchend).
+    window.addEventListener('pointerup', unlock);
+    window.addEventListener('touchend', unlock);
     window.addEventListener('keydown', unlock);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.inRace && !this.paused && this.state !== State.FINISHED) this.setPaused(true);

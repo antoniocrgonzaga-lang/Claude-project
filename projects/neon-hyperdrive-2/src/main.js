@@ -2,7 +2,7 @@ import { Game } from './Game.js';
 import { loadSettings } from './Config.js';
 import { setLanguage, t } from './I18n.js';
 import { keyProbeRequested, startKeyProbe } from './KeyProbe.js';
-import { PointerControls, pointerControlsWanted } from './PointerControls.js';
+import { PointerControls, controlsMode } from './PointerControls.js';
 
 const errorBox = document.getElementById('error');
 
@@ -40,8 +40,17 @@ function boot() {
     // teclado à página sozinhos: todo clique pede o foco de novo, por garantia.
     window.addEventListener('pointerdown', () => window.focus());
     if (keyProbeRequested()) startKeyProbe(game.input);
-    // Controles pelo mouse: sozinhos no navegador do Second Life, ou com ?mouse=1.
-    if (pointerControlsWanted()) new PointerControls(game.input, game.bus, document.getElementById('hud'));
+    // Controles na tela: toque em celular/tablet (?touch=1/0) e mouse no
+    // navegador do Second Life (?mouse=1/0). Ver src/PointerControls.js.
+    const mode = controlsMode();
+    if (mode) new PointerControls(game.input, game.bus, document.getElementById('hud'), mode);
+    if (mode === 'touch') {
+      // Celular em pé: o aviso "gire o aparelho" cobre a tela (CSS) e a corrida pausa.
+      const portrait = window.matchMedia('(orientation: portrait) and (max-width: 600px)');
+      portrait.addEventListener?.('change', (e) => {
+        if (e.matches && game.inRace && !game.paused && !game.resultsShown) game.setPaused(true);
+      });
+    }
   } catch (err) {
     console.error(err);
     showError(err?.message || String(err));

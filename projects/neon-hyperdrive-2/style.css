@@ -215,3 +215,71 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--cyan); }
 #pointer-controls .pc-rail i.on { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 #pointer-controls small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 0.1em; color: #cfd6ff; text-shadow: 0 0 4px #000; }
 body.pointer-mode #game { touch-action: none; }
+
+/* ---------- Modo toque (celular/tablet) — ver src/PointerControls.js ---------- */
+.touch-only { display: none !important; }
+body.touch-mode .touch-only { display: revert !important; }
+body.touch-mode .no-touch { display: none !important; }
+
+/* Sem rolagem, zoom por pinça/toque duplo nem menu de "segurar o dedo" */
+body.touch-mode { touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; overscroll-behavior: none; }
+body.touch-mode #game, body.touch-mode #hud { touch-action: none; }
+body.touch-mode button, body.touch-mode input { touch-action: manipulation; }
+/* Telas de menu: se não couberem (celular deitado), rolam com o dedo */
+body.touch-mode .screen { touch-action: pan-x pan-y; overflow-y: auto; justify-content: safe center; -webkit-overflow-scrolling: touch;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+body.touch-mode .btn { min-height: 48px; }
+body.touch-mode .btn.small { min-height: 40px; padding: 10px 16px; }
+body.touch-mode .btn:hover { transform: none; }
+body.touch-mode input[type="range"] { height: 32px; }
+body.touch-mode input[type="checkbox"] { width: 28px; height: 28px; }
+
+/* Botões na tela (respeitam o entalhe/cantos arredondados com safe-area) */
+#pointer-controls.pc-touch .pc-buttons { position: absolute; transform: none; display: flex; gap: 10px; pointer-events: auto; }
+#pointer-controls.pc-touch .pc-top { top: max(10px, env(safe-area-inset-top)); right: auto; left: 50%; transform: translateX(-50%); flex-direction: row; }
+#pointer-controls.pc-touch .pc-top button { min-width: 0; min-height: 46px; padding: 8px 12px; font-size: 11px; border-radius: 6px; }
+#pointer-controls.pc-touch .pc-top .pc-pause { border-color: var(--magenta); }
+#pointer-controls.pc-touch .pc-actions { top: auto; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 150px); flex-direction: row; align-items: flex-end; gap: 14px; }
+#pointer-controls.pc-touch .pc-actions button { width: 84px; height: 84px; min-width: 0; padding: 0; border-radius: 50%; font-size: 12px; background: rgba(4, 4, 20, 0.45); }
+#pointer-controls.pc-touch .pc-actions .pc-boost { width: 96px; height: 96px; font-size: 14px; border-width: 2px; }
+#pointer-controls.pc-touch .pc-drift { border-color: var(--cyan); }
+#pointer-controls button.down { background: rgba(0, 229, 255, 0.45); transform: scale(0.94); }
+#pointer-controls.pc-touch .pc-boost.down { background: rgba(255, 43, 214, 0.5); }
+/* "Joystick" que aparece sob o dedo enquanto vira */
+#pointer-controls .pc-stick { position: absolute; width: 96px; height: 40px; margin: -20px 0 0 -48px; border-radius: 20px; border: 1px solid rgba(0, 229, 255, 0.55); background: rgba(4, 4, 20, 0.3); pointer-events: none; }
+#pointer-controls .pc-stick i { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+#pointer-controls.pc-touch .pc-steer { bottom: auto; top: 58%; width: min(520px, 80vw); pointer-events: none; transition: opacity 0.6s; }
+#pointer-controls.pc-touch .pc-steer small { font-size: 12px; }
+#pointer-controls .pc-steer.done { opacity: 0; }
+/* No toque, os mostradores de baixo respeitam o safe-area */
+body.touch-mode #hud-map { left: max(18px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); }
+body.touch-mode .hud-br { right: max(22px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
+body.touch-mode .hud-tl { left: max(18px, env(safe-area-inset-left)); }
+body.touch-mode .hud-tr { right: max(18px, env(safe-area-inset-right)); }
+
+/* Aviso para girar o celular (só no modo toque, celular em pé) */
+#rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 600px) {
+  body.touch-mode #rotate-hint { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 30px; background: rgba(5, 3, 13, 0.94); text-align: center; color: var(--cyan); font-size: 16px; text-shadow: 0 0 12px var(--cyan); touch-action: none; }
+  #rotate-hint .rotate-icon { width: 46px; height: 80px; border: 3px solid var(--cyan); border-radius: 8px; box-shadow: 0 0 16px var(--cyan); animation: rotateHint 1.8s ease-in-out infinite; }
+}
+@keyframes rotateHint { 0%, 25% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+
+/* Telas baixas (celular deitado): HUD e menus mais compactos */
+@media (max-height: 520px) {
+  .screen { gap: 12px; }
+  .logo-main { font-size: clamp(36px, 8vw, 80px); }
+  .cards { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; max-width: 100%; padding-bottom: 6px; }
+  .card { flex: 0 0 240px; width: 240px; padding: 12px 14px; }
+  .card p { margin-bottom: 8px; }
+  .hud-tl .pos { font-size: 40px; }
+  .hud-tr { min-width: 0; padding: 6px 12px; }
+  .hud-tr span { font-size: 15px; }
+  .hud-tr .best span { font-size: 13px; }
+  #hud-map { width: 100px; height: 100px; }
+  .speed span { font-size: 40px; }
+  .hud-br { width: 170px; }
+  #pointer-controls.pc-touch .pc-actions { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 128px); }
+  #pointer-controls.pc-touch .pc-actions button { width: 70px; height: 70px; }
+  #pointer-controls.pc-touch .pc-actions .pc-boost { width: 80px; height: 80px; }
+}

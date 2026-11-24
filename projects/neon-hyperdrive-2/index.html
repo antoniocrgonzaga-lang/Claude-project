@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#05030d">
   <title>NEON HYPERDRIVE 2</title>
   <link rel="stylesheet" href="style.css">
   <script type="importmap">
@@ -65,7 +68,8 @@
         <button class="btn" data-action="help" data-i18n="menu.help">INSTRUÇÕES</button>
         <button class="btn" data-action="options" data-i18n="menu.options">OPÇÕES</button>
       </div>
-      <div class="footnote" data-i18n="title.footnote">W A S D / SETAS · SHIFT BOOST · ESPAÇO DRIFT</div>
+      <div class="footnote no-touch" data-i18n="title.footnote">W A S D / SETAS · SHIFT BOOST · ESPAÇO DRIFT</div>
+      <div class="footnote touch-only" data-i18n="title.footnoteTouch">ARRASTE O DEDO PARA VIRAR · BOOST E DRIFT NOS BOTÕES</div>
     </section>
 
     <section id="screen-ship" class="screen hidden">
@@ -106,6 +110,7 @@
           <li data-i18n-html="help.tip4"></li>
           <li data-i18n-html="help.tip5"></li>
           <li data-i18n-html="help.tip6"></li>
+          <li class="touch-only" data-i18n-html="help.touchTip"></li>
         </ul>
       </div>
       <div class="menu row"><button class="btn primary" data-action="back" data-i18n="btn.back">VOLTAR</button></div>
@@ -170,6 +175,9 @@
       </div>
     </section>
   </div>
+
+  <!-- Celular em pé (só no modo toque): pede para girar o aparelho -->
+  <div id="rotate-hint"><div class="rotate-icon"></div><p data-i18n="rotate.hint">GIRE O APARELHO PARA A HORIZONTAL</p></div>
 
   <div id="error" class="hidden"></div>
 

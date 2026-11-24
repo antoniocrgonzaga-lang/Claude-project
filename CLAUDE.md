@@ -59,6 +59,7 @@ Este arquivo é lido pelo Claude no início de cada sessão. Mantenha-o curto e 
 - Usa módulos ES como os outros jogos: `index.html` só abre por servidor (`start.bat`, que usa o `serve.ps1` em PowerShell); o arquivo único `dist/neon-hyperdrive-2.html` abre com duplo clique.
 - Three.js 0.170.0 em `vendor/three/` (só os módulos usados; sem CDN). Botões de ajuste em `src/Config.js`.
 - Depois de mexer em `src/`, `style.css`, `vendor/` ou `index.html`, rode `node tools/build.js` e commite o `dist/neon-hyperdrive-2.html` atualizado junto.
+- Controles de toque (`src/PointerControls.js`, modo `touch`): aparecem sozinhos em celular/tablet (mesmo com teclado), nunca no PC comum; `?touch=1/0` força/desliga. O modo mouse do Second Life (`?mouse=1/0`) é o mesmo arquivo — não quebrar.
 - Link público: https://antoniocrgonzaga-lang.github.io/Claude-project/projects/neon-hyperdrive-2/ — o jogo fica em `window.__game`.
 
 ## Git

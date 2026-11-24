@@ -148,6 +148,11 @@ const STRINGS = {
     'pc.reset': 'REPOSICIONAR',
     'pc.pause': 'PAUSA',
     'pc.hint': 'SEGURE O BOTÃO DO MOUSE E ARRASTE PARA OS LADOS PARA VIRAR',
+    'pc.drift': 'DRIFT',
+    'pc.hintTouch': 'ENCOSTE O DEDO E ARRASTE PARA OS LADOS PARA VIRAR · A NAVE ACELERA SOZINHA',
+    'title.footnoteTouch': 'ARRASTE O DEDO PARA VIRAR · BOOST E DRIFT NOS BOTÕES',
+    'help.touchTip': '<b class="c-cyan">No celular/tablet:</b> a nave acelera sozinha; encoste o dedo e arraste para os lados para virar. BOOST e DRIFT (segure) ficam no canto direito; CÂMERA, REPOSICIONAR e PAUSA ficam no alto.',
+    'rotate.hint': 'GIRE O APARELHO PARA A HORIZONTAL',
   },
 
   en: {
@@ -282,6 +287,11 @@ const STRINGS = {
     'pc.reset': 'RESET',
     'pc.pause': 'PAUSE',
     'pc.hint': 'HOLD THE MOUSE BUTTON AND DRAG LEFT OR RIGHT TO STEER',
+    'pc.drift': 'DRIFT',
+    'pc.hintTouch': 'TOUCH AND DRAG LEFT OR RIGHT TO STEER · THE SHIP ACCELERATES BY ITSELF',
+    'title.footnoteTouch': 'DRAG YOUR FINGER TO STEER · BOOST AND DRIFT ON THE BUTTONS',
+    'help.touchTip': '<b class="c-cyan">On phone/tablet:</b> the ship accelerates by itself; touch and drag left or right to steer. BOOST and DRIFT (hold) are in the right corner; CAMERA, RESET and PAUSE are at the top.',
+    'rotate.hint': 'TURN YOUR DEVICE SIDEWAYS',
   },
 
   de: {
@@ -416,6 +426,11 @@ const STRINGS = {
     'pc.reset': 'ZURÜCKSETZEN',
     'pc.pause': 'PAUSE',
     'pc.hint': 'MAUSTASTE HALTEN UND NACH LINKS ODER RECHTS ZIEHEN ZUM LENKEN',
+    'pc.drift': 'DRIFT',
+    'pc.hintTouch': 'BILDSCHIRM BERÜHREN UND NACH LINKS ODER RECHTS ZIEHEN ZUM LENKEN · DAS SCHIFF BESCHLEUNIGT VON SELBST',
+    'title.footnoteTouch': 'MIT DEM FINGER ZIEHEN ZUM LENKEN · BOOST UND DRIFT ÜBER DIE TASTEN',
+    'help.touchTip': '<b class="c-cyan">Auf Handy/Tablet:</b> Das Schiff beschleunigt von selbst; Bildschirm berühren und nach links oder rechts ziehen zum Lenken. BOOST und DRIFT (halten) sind unten rechts; KAMERA, ZURÜCKSETZEN und PAUSE oben.',
+    'rotate.hint': 'GERÄT BITTE QUER HALTEN',
   },
 };
 

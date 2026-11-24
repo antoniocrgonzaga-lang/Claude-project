@@ -10,7 +10,7 @@ O jogo tem 3 naves, 5 pistas temáticas, efeitos sonoros e trilha sonora sinteti
 - **No navegador (sem baixar nada):** <https://antoniocrgonzaga-lang.github.io/Claude-project/projects/neon-hyperdrive-2/>
 - **Arquivo único, com duplo clique:** baixe [`dist/neon-hyperdrive-2.html`](dist/neon-hyperdrive-2.html) (~1 MB) e abra no Chrome, Edge ou Firefox. Funciona offline.
 
-> Feito para PC com **teclado** (ou gamepad); numa TV do Second Life dá para jogar só com o **mouse** (ver abaixo). Em celular/tablet ainda não há controles de toque.
+> Joga no PC com **teclado** (ou gamepad), no **celular e tablet** com **toque** (ver abaixo) e numa TV do Second Life só com o **mouse**.
 > As opções (idioma, dificuldade, gráficos, volumes) ficam salvas no navegador **por endereço**: o link acima, o `localhost` e o arquivo único guardam opções separadas.
 
 ## Como rodar (para mexer no código)
@@ -32,6 +32,24 @@ Para parar, feche a janela preta do servidor.
 | Reposicionar a nave na pista | R | X |
 | Alternar câmera (próxima, distante, cockpit) | C | Y |
 | Pausar | P ou Esc | Start |
+
+### No celular e no tablet (toque)
+
+Os controles de toque aparecem sozinhos em aparelhos com tela de toque (celular, tablet, iPad) — também no tablet com
+teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fim do endereço; `?touch=0` desliga.
+
+- **A nave acelera sozinha** (não há botão de acelerar).
+- **Virar:** encoste o dedo em qualquer ponto livre da tela e **arraste para os lados**. Conta a distância a partir de
+  onde o dedo encostou (aparece um pequeno "joystick" sob o dedo); soltou, a nave segue reta.
+- **BOOST** (rajada curta) e **DRIFT** (segure) ficam no canto inferior direito.
+- **CÂMERA**, **REPOSICIONAR** e **PAUSA** ficam no alto, ao centro.
+- Dá para virar com um dedo e apertar BOOST/DRIFT com outro ao mesmo tempo.
+- Os menus funcionam com toques; se uma tela não couber (celular deitado), ela rola com o dedo.
+- No celular **em pé** aparece um aviso para girar o aparelho, e a corrida pausa. Jogue com ele **deitado**.
+- A página não rola nem dá zoom durante o jogo; os botões respeitam o entalhe e os cantos arredondados da tela.
+
+Ajustes em `POINTER` (`src/Config.js`): `touchAutoThrottle` (aceleração automática) e `touchSteerSpan`
+(quanto arrastar o dedo para virar tudo).
 
 ## Jogar numa TV do Second Life (mídia no prim)
 
@@ -99,7 +117,7 @@ neon-hyperdrive-2/
     ├── HUD.js / Menu.js   ← interface da corrida e telas
     ├── InputManager.js    ← teclado + gamepad (com reservas para navegadores embutidos)
     ├── KeyProbe.js        ← painel de teste de teclado (?keys=1)
-    ├── PointerControls.js ← controles pelo mouse (Second Life / ?mouse=1)
+    ├── PointerControls.js ← controles na tela: toque (celular/tablet, ?touch=1) e mouse (Second Life, ?mouse=1)
     ├── AudioManager.js    ← efeitos sonoros sintetizados
     └── MusicManager.js / Songs.js ← sequenciador e as 6 músicas (escritas como dados)
 ```
@@ -117,7 +135,6 @@ Depois de mexer em `src/`, `style.css`, `vendor/` ou `index.html`, rode `node to
 
 ## Ideias para expandir
 
-- Controles de toque para tablet e celular.
 - Recordes de volta salvos por pista e um modo contra o relógio.
 - Campeonato com as 5 pistas em sequência e pontuação.
 - Fantasma da melhor volta.

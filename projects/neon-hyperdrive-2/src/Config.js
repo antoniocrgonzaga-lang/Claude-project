@@ -84,13 +84,18 @@ export const CONFIG = {
 };
 
 // Controles pelo mouse (pensados para as TVs do Second Life, onde o clique chega
-// à página mas o teclado nem sempre chega). Ver src/PointerControls.js.
-// Ligam sozinhos no navegador do Second Life; ?mouse=1 força, ?mouse=0 desliga.
+// à página mas o teclado nem sempre chega) e pelo toque (celular/tablet).
+// Ver src/PointerControls.js. O mouse liga sozinho no navegador do Second Life
+// (?mouse=1 força, ?mouse=0 desliga); o toque liga sozinho em celular/tablet
+// (?touch=1 força, ?touch=0 desliga).
 export const POINTER = {
   autoThrottle: false,  // true = acelera sozinho durante a corrida (para jogar só com o mouse)
   steerSpan: 0.32,      // fração da largura da tela, a partir do centro, para virar 100%
   deadZone: 0.06,       // zona morta no centro (fração de steerSpan) para andar reto
   boostBurst: 1.6,      // segundos de boost a cada clique no botão BOOST
+  // Toque (celular/tablet):
+  touchAutoThrottle: true, // acelera sozinho no celular/tablet (não há tecla para acelerar)
+  touchSteerSpan: 0.22,    // quanto arrastar o dedo (fração do lado menor da tela) para virar 100%
 };
 
 export const QUALITY = {
