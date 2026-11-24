@@ -95,10 +95,10 @@ export const POINTER = {
   boostBurst: 1.6,      // segundos de boost a cada clique no botão BOOST
   // Toque (celular/tablet):
   touchAutoThrottle: true, // acelera sozinho no celular/tablet (não há tecla para acelerar)
-  touchSteerSpan: 0.34,    // quanto arrastar o dedo (fração do lado menor da tela) para virar 100%
-                           // (maior = mais tolerante: o dedo tremer mexe menos a nave)
-  touchDeadZone: 0.12,     // zona morta do toque (fração de touchSteerSpan) para andar reto sem esforço
-  touchSteerCurve: 1.35,   // curva de resposta do toque: >1 = suave perto do centro, forte na ponta
+  touchSteerSpan: 0.22,    // quanto arrastar o dedo (fração do lado menor da tela) para virar 100%
+                           // (a zona morta é a mesma do mouse: deadZone)
+  touchSteerZone: 0.5,     // o joystick só nasce de toques nesta fração da tela, a partir da ESQUERDA
+                           // (0.5 = metade esquerda; a direita é dos botões BOOST/DRIFT/ACELERAR)
 };
 
 export const QUALITY = {

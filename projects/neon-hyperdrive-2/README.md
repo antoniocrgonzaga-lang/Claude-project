@@ -42,9 +42,10 @@ teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fi
   mostra o estado — verde aceso = **LIGADA** (a nave acelera sozinha), cinza = **DESLIGADA**. A escolha fica salva no aparelho.
 - **Com a automática desligada** aparece o botão verde **ACELERAR**: **segure** para acelerar e **solte** para a nave
   planar (sem frear) — é o jeito de entrar nas curvas fechadas sem bater nem cair.
-- **Virar:** encoste o dedo em qualquer ponto livre da tela e **arraste para os lados**. Conta a distância a partir de
-  onde o dedo encostou (aparece um "joystick" grande sob o dedo); soltou, a nave segue reta. A direção é tolerante:
-  tem zona morta no centro e resposta suave para pequenos desvios do dedo.
+- **Virar:** encoste o dedo em qualquer ponto livre da **metade esquerda** da tela e **arraste para os lados**. Conta a
+  distância a partir de onde o dedo encostou: o "joystick" aparece exatamente onde o primeiro toque caiu, então não é
+  preciso acertar um lugar fixo. Soltou, a nave segue reta. Na metade direita (onde ficam BOOST, DRIFT e ACELERAR) um
+  toque que erra o botão não faz nada — não cria joystick.
 - **BOOST** (rajada curta), **DRIFT** (segure) e **ACELERAR** (segure) ficam no canto inferior direito.
 - **CÂMERA**, **REPOSICIONAR** e **PAUSA** ficam no alto, ao centro.
 - Dá para virar com um dedo e segurar ACELERAR / apertar BOOST ou DRIFT com outro ao mesmo tempo.
@@ -53,7 +54,8 @@ teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fi
 - A página não rola nem dá zoom durante o jogo; os botões respeitam o entalhe e os cantos arredondados da tela.
 
 Ajustes em `POINTER` (`src/Config.js`): `touchAutoThrottle` (aceleração automática ligada ou não na primeira vez),
-`touchSteerSpan` (quanto arrastar o dedo para virar tudo), `touchDeadZone` (zona morta) e `touchSteerCurve` (suavidade).
+`touchSteerSpan` (quanto arrastar o dedo para virar tudo), `touchSteerZone` (fração da tela, a partir da esquerda,
+onde o joystick pode nascer; padrão metade) e `deadZone` (zona morta, a mesma do mouse).
 O tamanho do "joystick" na tela fica em `.pc-stick` no `style.css`.
 
 ## Jogar numa TV do Second Life (mídia no prim)

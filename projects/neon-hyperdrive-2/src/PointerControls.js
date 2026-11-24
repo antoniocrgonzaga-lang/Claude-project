@@ -13,9 +13,10 @@
 //     no aparelho; o padrão é POINTER.touchAutoThrottle). Com ela DESLIGADA aparece
 //     o botão ACELERAR: segure para acelerar, solte para deixar a nave planar
 //     (útil para entrar nas curvas fechadas sem bater nem cair);
-//   - ENCOSTE o dedo em qualquer ponto livre da tela e ARRASTE para os lados para
-//     virar: conta a distância a partir de onde o dedo encostou (um "joystick"
-//     que nasce sob o dedo); soltou, segue reto;
+//   - ENCOSTE o dedo em qualquer ponto livre da METADE ESQUERDA da tela
+//     (POINTER.touchSteerZone) e ARRASTE para os lados para virar: conta a
+//     distância a partir de onde o dedo encostou (um "joystick" que nasce sob o
+//     dedo); soltou, segue reto. Toques no lado direito fora dos botões são ignorados;
 //   - botões grandes no canto inferior direito: DRIFT (segurar), BOOST (rajada)
 //     e ACELERAR (segurar, só com a aceleração automática desligada);
 //   - botões pequenos no alto, ao centro: CÂMERA, REPOSICIONAR e PAUSA;
@@ -177,6 +178,9 @@ export class PointerControls {
       if (!this._active() || e.target.closest?.('#pointer-controls .pc-buttons, #screens .screen:not(.hidden)')) return;
       if (e.button !== undefined && e.button !== 0) return;
       if (this.pointerId !== null) return; // já tem um dedo virando
+      // Toque: o joystick só nasce na parte ESQUERDA da tela; um toque que erra um
+      // botão do lado direito não faz nada.
+      if (this.touch && e.clientX > window.innerWidth * POINTER.touchSteerZone) return;
       this.pointerId = e.pointerId;
       this.p.held = true;
       this.originX = e.clientX;
@@ -248,10 +252,8 @@ export class PointerControls {
     }
     x = Math.max(-1, Math.min(1, x));
     // zona morta no centro, depois reescala para continuar chegando a ±1
-    const dz = this.touch ? POINTER.touchDeadZone : POINTER.deadZone;
+    const dz = POINTER.deadZone;
     x = Math.abs(x) < dz ? 0 : Math.sign(x) * (Math.abs(x) - dz) / (1 - dz);
-    // Toque: curva suave (pequenos desvios do dedo viram pouco; a ponta vira tudo).
-    if (this.touch && x !== 0) x = Math.sign(x) * Math.pow(Math.abs(x), POINTER.touchSteerCurve);
     this.p.steer = x;
     if (x !== 0 && !this.steered) { this.steered = true; this.hint?.classList.add('done'); }
     this._show();
