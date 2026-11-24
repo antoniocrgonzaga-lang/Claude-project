@@ -3,19 +3,25 @@
 // Modo MOUSE — para quando o teclado não chega ao jogo, caso típico: o jogo
 // aberto numa TV (mídia no prim) do Second Life, onde o visualizador repassa os
 // cliques para a página, mas não as teclas.
-//   - acelera com W/↑ (ou sozinha, se POINTER.autoThrottle = true em Config.js);
+//   - acelera com W/↑ (no PC nunca há aceleração automática);
 //   - SEGURE o botão do mouse em qualquer ponto da tela e ARRASTE para os lados
 //     para virar (quanto mais longe do centro, mais vira; soltou, segue reto);
 //   - botões na lateral direita: BOOST (rajada curta), CÂMERA, REPOSICIONAR e PAUSA.
 //
 // Modo TOQUE — celular e tablet:
-//   - a nave acelera sozinha (POINTER.touchAutoThrottle);
+//   - botão ACEL. AUTO liga/desliga a aceleração automática (a escolha fica salva
+//     no aparelho; o padrão é POINTER.touchAutoThrottle). Com ela DESLIGADA aparece
+//     o botão ACELERAR: segure para acelerar, solte para deixar a nave planar
+//     (útil para entrar nas curvas fechadas sem bater nem cair);
 //   - ENCOSTE o dedo em qualquer ponto livre da tela e ARRASTE para os lados para
 //     virar: conta a distância a partir de onde o dedo encostou (um "joystick"
 //     que nasce sob o dedo); soltou, segue reto;
-//   - botões grandes no canto inferior direito: BOOST (rajada) e DRIFT (segurar);
+//   - botões grandes no canto inferior direito: DRIFT (segurar), BOOST (rajada)
+//     e ACELERAR (segurar, só com a aceleração automática desligada);
 //   - botões pequenos no alto, ao centro: CÂMERA, REPOSICIONAR e PAUSA;
 //   - dá para virar com um dedo e apertar os botões com outro ao mesmo tempo.
+//
+// No PC (teclado e modo mouse do Second Life) NUNCA há aceleração automática.
 //
 // Ativação (veja controlsMode):
 //   - ?touch=1 força o toque, ?touch=0 desliga;
@@ -25,7 +31,23 @@
 //     e nada no PC comum (só teclado/controle).
 // Botões de ajuste: POINTER em src/Config.js.
 import { POINTER } from './Config.js';
-import { translateDom } from './I18n.js';
+import { t, translateDom } from './I18n.js';
+
+// Escolha do jogador para a aceleração automática no toque (salva no aparelho).
+const AUTO_KEY = 'neon-hyperdrive-2.touchAuto';
+
+function loadTouchAuto() {
+  try {
+    const saved = localStorage.getItem(AUTO_KEY);
+    if (saved === '1') return true;
+    if (saved === '0') return false;
+  } catch { /* sem localStorage (modo privado etc.) */ }
+  return !!POINTER.touchAutoThrottle;
+}
+
+function saveTouchAuto(on) {
+  try { localStorage.setItem(AUTO_KEY, on ? '1' : '0'); } catch { /* ignora */ }
+}
 
 /** Lê ?nome=1 / ?nome=0 do endereço (true, false ou null se ausente). */
 function urlFlag(name) {
@@ -72,7 +94,10 @@ export class PointerControls {
     this.touch = mode === 'touch';
     this.p = input.pointer;
     this.p.enabled = true;
-    this.p.autoThrottle = this.touch ? POINTER.touchAutoThrottle : POINTER.autoThrottle;
+    // Aceleração automática só existe no toque; no PC (inclusive no modo mouse
+    // do Second Life) fica sempre desligada — acelera-se com W/↑.
+    this.p.autoThrottle = this.touch ? loadTouchAuto() : false;
+    this.p.throttleHeld = false;
     this.pointerId = null;
     this.originX = 0;
     this.steered = false;
@@ -89,11 +114,15 @@ export class PointerControls {
         <button type="button" data-act="pause" data-i18n="pc.pause" class="pc-pause"></button>
       </div>
       <div class="pc-buttons pc-actions">
-        <button type="button" data-act="drift" data-i18n="pc.drift" class="pc-drift"></button>
-        <button type="button" data-act="boost" data-i18n="pc.boost" class="pc-boost"></button>
+        <button type="button" data-act="auto" class="pc-auto" aria-pressed="false"></button>
+        <div class="pc-round">
+          <button type="button" data-act="drift" data-i18n="pc.drift" class="pc-drift"></button>
+          <button type="button" data-act="boost" data-i18n="pc.boost" class="pc-boost"></button>
+          <button type="button" data-act="throttle" data-i18n="pc.accel" class="pc-accel"></button>
+        </div>
       </div>
       <div class="pc-stick hidden"><i></i></div>
-      <div class="pc-steer"><small data-i18n="pc.hintTouch"></small></div>` : `
+      <div class="pc-steer"><small></small></div>` : `
       <div class="pc-buttons">
         <button type="button" data-act="boost" class="pc-boost" data-i18n="pc.boost"></button>
         <button type="button" data-act="camera" data-i18n="pc.camera"></button>
@@ -108,6 +137,11 @@ export class PointerControls {
     this.stick = root.querySelector('.pc-stick');
     this.knob = this.stick?.querySelector('i');
     this.hint = root.querySelector('.pc-steer');
+    this.autoBtn = root.querySelector('.pc-auto');
+    this.accelBtn = root.querySelector('.pc-accel');
+    this._renderAuto();
+    // O texto do botão AUTO depende do estado: refaz ao trocar de idioma.
+    bus.on?.('settings:changed', () => this._renderAuto());
 
     // ---- botões (cada dedo é independente: dá para virar e apertar ao mesmo tempo)
     for (const box of root.querySelectorAll('.pc-buttons')) {
@@ -120,6 +154,8 @@ export class PointerControls {
         const act = btn.dataset.act;
         if (act === 'boost') this.p.boostUntil = performance.now() + POINTER.boostBurst * 1000;
         else if (act === 'drift') { this.p.drift = true; btn.setPointerCapture?.(e.pointerId); }
+        else if (act === 'throttle') { this.p.throttleHeld = true; btn.setPointerCapture?.(e.pointerId); }
+        else if (act === 'auto') this.setAutoThrottle(!this.p.autoThrottle);
         else bus.emit(`input:${act}`);
       });
       const up = (e) => {
@@ -127,6 +163,7 @@ export class PointerControls {
         if (!btn) return;
         btn.classList.remove('down');
         if (btn.dataset.act === 'drift') this.p.drift = false;
+        if (btn.dataset.act === 'throttle') this.p.throttleHeld = false; // soltou: a nave plana
       };
       box.addEventListener('pointerup', up);
       box.addEventListener('pointercancel', up);
@@ -175,6 +212,27 @@ export class PointerControls {
     }
   }
 
+  /** Liga/desliga a aceleração automática do toque e guarda a escolha. */
+  setAutoThrottle(on) {
+    if (!this.touch) return; // no PC nunca há aceleração automática
+    this.p.autoThrottle = !!on;
+    this.p.throttleHeld = false;
+    saveTouchAuto(this.p.autoThrottle);
+    this._renderAuto();
+  }
+
+  /** Mostra o estado do botão AUTO e o botão ACELERAR só quando a automática está desligada. */
+  _renderAuto() {
+    if (!this.autoBtn) return;
+    const on = this.p.autoThrottle;
+    this.autoBtn.textContent = t(on ? 'pc.autoOn' : 'pc.autoOff');
+    this.autoBtn.classList.toggle('on', on);
+    this.autoBtn.setAttribute('aria-pressed', String(on));
+    this.accelBtn.classList.toggle('hidden', on);
+    this.accelBtn.classList.remove('down');
+    if (this.hint) this.hint.querySelector('small').textContent = t(on ? 'pc.hintTouch' : 'pc.hintTouchManual');
+  }
+
   /** Só dirige durante a corrida e fora da pausa. */
   _active() { return this.input.captureKeys && !document.querySelector('#screens .screen:not(.hidden)'); }
 
@@ -190,8 +248,10 @@ export class PointerControls {
     }
     x = Math.max(-1, Math.min(1, x));
     // zona morta no centro, depois reescala para continuar chegando a ±1
-    const dz = POINTER.deadZone;
+    const dz = this.touch ? POINTER.touchDeadZone : POINTER.deadZone;
     x = Math.abs(x) < dz ? 0 : Math.sign(x) * (Math.abs(x) - dz) / (1 - dz);
+    // Toque: curva suave (pequenos desvios do dedo viram pouco; a ponta vira tudo).
+    if (this.touch && x !== 0) x = Math.sign(x) * Math.pow(Math.abs(x), POINTER.touchSteerCurve);
     this.p.steer = x;
     if (x !== 0 && !this.steered) { this.steered = true; this.hint?.classList.add('done'); }
     this._show();
@@ -210,6 +270,10 @@ export class PointerControls {
       this.marker.style.left = `${50 + this.p.steer * 50}%`;
       this.marker.classList.toggle('on', this.p.held);
     }
-    if (this.knob) this.knob.style.transform = `translateX(${this.p.steer * 34}px)`;
+    if (this.knob) {
+      // a bolinha anda até a borda do "joystick", qualquer que seja o tamanho dele no CSS
+      const travel = Math.max(0, (this.stick.offsetWidth - this.knob.offsetWidth) / 2);
+      this.knob.style.transform = `translateX(${this.p.steer * travel}px)`;
+    }
   }
 }

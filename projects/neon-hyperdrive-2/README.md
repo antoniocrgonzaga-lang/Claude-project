@@ -38,18 +38,23 @@ Para parar, feche a janela preta do servidor.
 Os controles de toque aparecem sozinhos em aparelhos com tela de toque (celular, tablet, iPad) — também no tablet com
 teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fim do endereço; `?touch=0` desliga.
 
-- **A nave acelera sozinha** (não há botão de acelerar).
+- **Aceleração automática liga/desliga:** o botão **ACEL. AUTO** (canto inferior direito, acima dos botões redondos)
+  mostra o estado — verde aceso = **LIGADA** (a nave acelera sozinha), cinza = **DESLIGADA**. A escolha fica salva no aparelho.
+- **Com a automática desligada** aparece o botão verde **ACELERAR**: **segure** para acelerar e **solte** para a nave
+  planar (sem frear) — é o jeito de entrar nas curvas fechadas sem bater nem cair.
 - **Virar:** encoste o dedo em qualquer ponto livre da tela e **arraste para os lados**. Conta a distância a partir de
-  onde o dedo encostou (aparece um pequeno "joystick" sob o dedo); soltou, a nave segue reta.
-- **BOOST** (rajada curta) e **DRIFT** (segure) ficam no canto inferior direito.
+  onde o dedo encostou (aparece um "joystick" grande sob o dedo); soltou, a nave segue reta. A direção é tolerante:
+  tem zona morta no centro e resposta suave para pequenos desvios do dedo.
+- **BOOST** (rajada curta), **DRIFT** (segure) e **ACELERAR** (segure) ficam no canto inferior direito.
 - **CÂMERA**, **REPOSICIONAR** e **PAUSA** ficam no alto, ao centro.
-- Dá para virar com um dedo e apertar BOOST/DRIFT com outro ao mesmo tempo.
+- Dá para virar com um dedo e segurar ACELERAR / apertar BOOST ou DRIFT com outro ao mesmo tempo.
 - Os menus funcionam com toques; se uma tela não couber (celular deitado), ela rola com o dedo.
 - No celular **em pé** aparece um aviso para girar o aparelho, e a corrida pausa. Jogue com ele **deitado**.
 - A página não rola nem dá zoom durante o jogo; os botões respeitam o entalhe e os cantos arredondados da tela.
 
-Ajustes em `POINTER` (`src/Config.js`): `touchAutoThrottle` (aceleração automática) e `touchSteerSpan`
-(quanto arrastar o dedo para virar tudo).
+Ajustes em `POINTER` (`src/Config.js`): `touchAutoThrottle` (aceleração automática ligada ou não na primeira vez),
+`touchSteerSpan` (quanto arrastar o dedo para virar tudo), `touchDeadZone` (zona morta) e `touchSteerCurve` (suavidade).
+O tamanho do "joystick" na tela fica em `.pc-stick` no `style.css`.
 
 ## Jogar numa TV do Second Life (mídia no prim)
 
@@ -65,7 +70,7 @@ O jogo funciona como mídia numa face de objeto, mas o teclado só chega à pág
 (no navegador comum, use `?mouse=1` no endereço; `?mouse=0` desliga). Acelere com **W/↑**; para virar, dá para
 **segurar o botão do mouse e arrastar para os lados** (quanto mais longe do centro, mais vira). Na lateral direita
 ficam os botões **BOOST** (rajada curta), **CÂMERA**, **REPOSICIONAR** e **PAUSA**. O teclado continua valendo junto.
-Ajustes em `POINTER` (`src/Config.js`); com `autoThrottle: true` a nave acelera sozinha e dá para jogar só com o mouse.
+Ajustes em `POINTER` (`src/Config.js`). No PC (teclado ou mouse) **nunca** há aceleração automática.
 
 **Teste de teclado:** coloque `?keys=1` no fim do endereço da mídia
 (ex.: `.../neon-hyperdrive-2/?keys=1`). Aparece um painel mostrando se a página tem o foco e cada tecla recebida:

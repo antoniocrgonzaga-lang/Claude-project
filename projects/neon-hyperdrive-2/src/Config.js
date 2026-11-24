@@ -89,13 +89,16 @@ export const CONFIG = {
 // (?mouse=1 força, ?mouse=0 desliga); o toque liga sozinho em celular/tablet
 // (?touch=1 força, ?touch=0 desliga).
 export const POINTER = {
-  autoThrottle: false,  // true = acelera sozinho durante a corrida (para jogar só com o mouse)
+  // Modo mouse (PC/Second Life): NUNCA acelera sozinho; acelera-se com W/↑.
   steerSpan: 0.32,      // fração da largura da tela, a partir do centro, para virar 100%
   deadZone: 0.06,       // zona morta no centro (fração de steerSpan) para andar reto
   boostBurst: 1.6,      // segundos de boost a cada clique no botão BOOST
   // Toque (celular/tablet):
   touchAutoThrottle: true, // acelera sozinho no celular/tablet (não há tecla para acelerar)
-  touchSteerSpan: 0.22,    // quanto arrastar o dedo (fração do lado menor da tela) para virar 100%
+  touchSteerSpan: 0.34,    // quanto arrastar o dedo (fração do lado menor da tela) para virar 100%
+                           // (maior = mais tolerante: o dedo tremer mexe menos a nave)
+  touchDeadZone: 0.12,     // zona morta do toque (fração de touchSteerSpan) para andar reto sem esforço
+  touchSteerCurve: 1.35,   // curva de resposta do toque: >1 = suave perto do centro, forte na ponta
 };
 
 export const QUALITY = {

@@ -52,7 +52,7 @@ export class InputManager {
     this.enabled = true;
     this._padPrev = {};
     // Controles pelo mouse/toque (PointerControls.js escreve aqui; update() lê).
-    this.pointer = { enabled: false, held: false, steer: 0, boostUntil: 0, drift: false, autoThrottle: false };
+    this.pointer = { enabled: false, held: false, steer: 0, boostUntil: 0, drift: false, autoThrottle: false, throttleHeld: false };
     this._attached = false;
 
     this._onDown = (e) => {
@@ -110,7 +110,8 @@ export class InputManager {
   _applyPointer(s) {
     const p = this.pointer;
     if (!p.enabled) return;
-    if (p.autoThrottle && !s.brake) s.throttle = 1;
+    // Aceleração automática (só no toque) ou botão ACELERAR segurado.
+    if ((p.autoThrottle || p.throttleHeld) && !s.brake) s.throttle = 1;
     if (p.held && s.steer === 0) s.steer = p.steer;
     if (performance.now() < p.boostUntil) s.boost = true;
     if (p.drift) s.drift = true;
