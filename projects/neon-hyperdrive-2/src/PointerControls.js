@@ -243,16 +243,15 @@ export class PointerControls {
   _aim(e) {
     let x;
     if (this.touch) {
-      // Toque: distância a partir de onde o dedo encostou.
-      const span = Math.max(40, Math.min(window.innerWidth, window.innerHeight) * POINTER.touchSteerSpan);
-      x = (e.clientX - this.originX) / span;
+      // Toque: distância em pixels a partir de onde o dedo encostou (curso curto).
+      x = (e.clientX - this.originX) / POINTER.touchSteerPx;
     } else {
       // Mouse: distância a partir do centro da tela.
       x = (e.clientX - window.innerWidth / 2) / (window.innerWidth * POINTER.steerSpan);
     }
     x = Math.max(-1, Math.min(1, x));
     // zona morta no centro, depois reescala para continuar chegando a ±1
-    const dz = POINTER.deadZone;
+    const dz = this.touch ? POINTER.touchDeadPx / POINTER.touchSteerPx : POINTER.deadZone;
     x = Math.abs(x) < dz ? 0 : Math.sign(x) * (Math.abs(x) - dz) / (1 - dz);
     this.p.steer = x;
     if (x !== 0 && !this.steered) { this.steered = true; this.hint?.classList.add('done'); }

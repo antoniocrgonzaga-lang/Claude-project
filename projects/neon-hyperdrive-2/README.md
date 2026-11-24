@@ -44,7 +44,7 @@ teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fi
   planar (sem frear) — é o jeito de entrar nas curvas fechadas sem bater nem cair.
 - **Virar:** encoste o dedo em qualquer ponto livre da **metade esquerda** da tela e **arraste para os lados**. Conta a
   distância a partir de onde o dedo encostou: o "joystick" aparece exatamente onde o primeiro toque caiu, então não é
-  preciso acertar um lugar fixo. Soltou, a nave segue reta. Na metade direita (onde ficam BOOST, DRIFT e ACELERAR) um
+  preciso acertar um lugar fixo. O curso é curto: uns **5 mm** (48 px) para o lado já viram tudo. Soltou, a nave segue reta. Na metade direita (onde ficam BOOST, DRIFT e ACELERAR) um
   toque que erra o botão não faz nada — não cria joystick.
 - **BOOST** (rajada curta), **DRIFT** (segure) e **ACELERAR** (segure) ficam no canto inferior direito.
 - **CÂMERA**, **REPOSICIONAR** e **PAUSA** ficam no alto, ao centro.
@@ -54,8 +54,9 @@ teclado conectado. No PC comum não aparecem. Para forçar, use `?touch=1` no fi
 - A página não rola nem dá zoom durante o jogo; os botões respeitam o entalhe e os cantos arredondados da tela.
 
 Ajustes em `POINTER` (`src/Config.js`): `touchAutoThrottle` (aceleração automática ligada ou não na primeira vez),
-`touchSteerSpan` (quanto arrastar o dedo para virar tudo), `touchSteerZone` (fração da tela, a partir da esquerda,
-onde o joystick pode nascer; padrão metade) e `deadZone` (zona morta, a mesma do mouse).
+`touchSteerPx` (quantos pixels arrastar o dedo para virar tudo; padrão 48, curso curto como o joystick pequeno),
+`touchDeadPx` (zona morta em pixels; padrão 4) e `touchSteerZone` (fração da tela, a partir da esquerda, onde o
+joystick pode nascer; padrão metade).
 O tamanho do "joystick" na tela fica em `.pc-stick` no `style.css`.
 
 ## Jogar numa TV do Second Life (mídia no prim)

@@ -255,8 +255,8 @@ body.touch-mode input[type="checkbox"] { width: 28px; height: 28px; }
 #pointer-controls button.down { background: rgba(0, 229, 255, 0.45); transform: scale(0.94); }
 #pointer-controls.pc-touch .pc-boost.down { background: rgba(255, 43, 214, 0.5); }
 /* "Joystick" que aparece sob o dedo enquanto vira */
-#pointer-controls .pc-stick { position: absolute; width: 120px; height: 48px; margin: -24px 0 0 -60px; border-radius: 24px; border: 2px solid rgba(0, 229, 255, 0.55); background: rgba(4, 4, 20, 0.3); pointer-events: none; }
-#pointer-controls .pc-stick i { position: absolute; top: 50%; left: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+#pointer-controls .pc-stick { position: absolute; width: 96px; height: 40px; margin: -20px 0 0 -48px; border-radius: 20px; border: 2px solid rgba(0, 229, 255, 0.55); background: rgba(4, 4, 20, 0.3); pointer-events: none; }
+#pointer-controls .pc-stick i { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
 #pointer-controls.pc-touch .pc-steer { bottom: auto; top: 58%; width: min(520px, 80vw); pointer-events: none; transition: opacity 0.6s; }
 #pointer-controls.pc-touch .pc-steer small { font-size: 12px; }
 #pointer-controls .pc-steer.done { opacity: 0; }
